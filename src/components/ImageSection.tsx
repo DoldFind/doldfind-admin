@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Control, Controller, FieldErrors } from "react-hook-form";
+import { Control, Controller, FieldErrors, UseFormSetValue, UseFormGetValues } from "react-hook-form";
 import {
   Image as ImageIcon,
   UploadCloud,
@@ -11,6 +11,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { PlaceFormValues } from "@/types/place";
 import { Input } from "./ui/Input";
@@ -19,14 +20,18 @@ import { Button } from "./ui/Button";
 interface ImageSectionProps {
   control: Control<PlaceFormValues>;
   errors: FieldErrors<PlaceFormValues>;
+  setValue?: UseFormSetValue<PlaceFormValues>;
+  getValues?: UseFormGetValues<PlaceFormValues>;
 }
 
-export const ImageSection: React.FC<ImageSectionProps> = ({ control, errors }) => {
+export const ImageSection: React.FC<ImageSectionProps> = ({ control, errors, setValue, getValues }) => {
   const [activeTab, setActiveTab] = useState<"upload" | "url">("upload");
   const [newImageUrl, setNewImageUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isAutoRetrieving, setIsAutoRetrieving] = useState(false);
+  const [autoRetrieveSuccess, setAutoRetrieveSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (
@@ -133,8 +138,9 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ control, errors }) =
         render={({ field }) => {
           const currentImages: string[] = field.value || [];
 
-          const handleAddUrl = () => {
+          const handleAddUrl = async () => {
             setErrorMessage(null);
+            setAutoRetrieveSuccess(null);
             const trimmed = newImageUrl.trim();
             if (!trimmed) {
               setErrorMessage("Please enter a valid image URL");
@@ -149,7 +155,55 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ control, errors }) =
               return;
             }
 
-            field.onChange([...currentImages, trimmed]);
+            let finalUrl = trimmed;
+
+            // Check if domain is Wikimedia Commons or Flickr for Auto Retrieval
+            const isWikimedia = trimmed.includes("wikimedia.org") || trimmed.includes("wikipedia.org");
+            const isFlickr = trimmed.includes("flickr.com") || trimmed.includes("flic.kr");
+
+            if (isWikimedia || isFlickr) {
+              setIsAutoRetrieving(true);
+              try {
+                const res = await fetch(`/api/metadata?url=${encodeURIComponent(trimmed)}`);
+                const result = await res.json();
+
+                if (res.ok && result.success && result.data) {
+                  if (result.data.imageUrl) {
+                    finalUrl = result.data.imageUrl;
+                  }
+                  const creditStr = result.data.creditString || `${result.data.author} (${result.data.license})`;
+                  setAutoRetrieveSuccess(
+                    `Auto-retrieved metadata from ${result.data.source}: "${creditStr}"`
+                  );
+
+                  if (setValue && getValues) {
+                    const currentCreds = (getValues("credits") || "").trim();
+                    if (!currentCreds) {
+                      setValue("credits", creditStr, { shouldValidate: true, shouldDirty: true });
+                    } else if (!currentCreds.includes(result.data.author)) {
+                      setValue("credits", `${currentCreds}; ${creditStr}`, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }
+                  }
+                } else {
+                  setErrorMessage(result.error?.message || "Failed to auto-retrieve metadata from Wikimedia/Flickr.");
+                }
+              } catch (err) {
+                setErrorMessage("Network error auto-retrieving metadata.");
+              } finally {
+                setIsAutoRetrieving(false);
+              }
+            } else {
+              setAutoRetrieveSuccess(
+                "Direct URL attached. Auto-retrieval is supported specifically for Wikimedia Commons and Flickr links."
+              );
+            }
+
+            if (!currentImages.includes(finalUrl)) {
+              field.onChange([...currentImages, finalUrl]);
+            }
             setNewImageUrl("");
           };
 
@@ -213,32 +267,56 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ control, errors }) =
 
               {/* Tab 2: Paste Direct URL */}
               {activeTab === "url" && (
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                  <div className="flex-1">
-                    <Input
-                      placeholder="Paste image URL (e.g. https://images.unsplash.com/...)"
-                      value={newImageUrl}
-                      onChange={(e) => {
-                        setNewImageUrl(e.target.value);
-                        if (errorMessage) setErrorMessage(null);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleAddUrl();
-                        }
-                      }}
-                    />
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Paste Wikimedia Commons or Flickr URL (e.g. https://commons.wikimedia.org/wiki/File:...)"
+                        value={newImageUrl}
+                        onChange={(e) => {
+                          setNewImageUrl(e.target.value);
+                          if (errorMessage) setErrorMessage(null);
+                          if (autoRetrieveSuccess) setAutoRetrieveSuccess(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddUrl();
+                          }
+                        }}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleAddUrl}
+                      disabled={isAutoRetrieving}
+                      variant="secondary"
+                      className="sm:self-start bg-slate-900 border-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 py-2.5 px-4"
+                    >
+                      {isAutoRetrieving ? (
+                        <>
+                          <Loader2 className="w-4 h-4 text-violet-400 animate-spin" />
+                          Retrieving...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 text-violet-400" />
+                          Add & Auto-Retrieve
+                        </>
+                      )}
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    onClick={handleAddUrl}
-                    variant="secondary"
-                    className="sm:self-start bg-slate-900 border-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 py-2.5 px-4"
-                  >
-                    <Plus className="w-4 h-4 text-violet-400" />
-                    Add URL
-                  </Button>
+                  <p className="text-[10px] text-slate-400">
+                    ⚡ Auto-retrieval automatically extracts image attribution &amp; license metadata for <strong className="text-slate-300">Wikimedia Commons</strong> and <strong className="text-slate-300">Flickr</strong> URLs.
+                  </p>
+                </div>
+              )}
+
+              {/* Status & Error Messages */}
+              {autoRetrieveSuccess && (
+                <div className="flex items-center gap-2 text-xs font-medium text-emerald-400 bg-emerald-955/40 border border-emerald-900/50 p-2.5 rounded-lg animate-fadeIn">
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                  <span>{autoRetrieveSuccess}</span>
                 </div>
               )}
 
@@ -256,14 +334,15 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ control, errors }) =
                 </span>
               )}
 
-              {/* Uploaded Images Gallery Grid */}
+              {/* Uploaded Images Gallery Grid & Attribute Preview */}
               {currentImages.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span className="font-semibold text-slate-300">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-850 pb-2">
+                    <span className="font-semibold text-slate-200 flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-violet-400" />
                       Attached Photos ({currentImages.length}/10)
                     </span>
-                    <span className="text-[11px] text-slate-500">
+                    <span className="text-[11px] text-slate-400">
                       First image is used as primary cover
                     </span>
                   </div>
@@ -271,6 +350,12 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ control, errors }) =
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {currentImages.map((imgUrl, index) => {
                       const isAppwriteBucket = imgUrl.includes("/storage/buckets/");
+                      let domainStr = "";
+                      try {
+                        domainStr = new URL(imgUrl).hostname;
+                      } catch {
+                        domainStr = "external-link";
+                      }
 
                       return (
                         <div
@@ -287,24 +372,32 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ control, errors }) =
                             }}
                           />
 
-                          <div className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 p-2">
-                            <a
-                              href={imgUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="p-1.5 bg-slate-900/90 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition"
-                              title="Open image full view"
-                            >
-                              <LinkIcon className="w-3.5 h-3.5" />
-                            </a>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveImage(index)}
-                              className="p-1.5 bg-red-955/90 hover:bg-red-900 border border-red-800 rounded-lg text-red-300 transition"
-                              title="Remove photo"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
+                          <div className="absolute inset-0 bg-slate-950/75 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-between p-2">
+                            <div className="w-full flex items-center justify-between">
+                              <span className="text-[9px] font-mono text-slate-300 truncate max-w-[100px] bg-slate-900/80 px-1.5 py-0.5 rounded">
+                                #{index + 1} {domainStr}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={imgUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-1.5 bg-slate-900/90 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition"
+                                title="Open image full view"
+                              >
+                                <LinkIcon className="w-3.5 h-3.5" />
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveImage(index)}
+                                className="p-1.5 bg-red-955/90 hover:bg-red-900 border border-red-800 rounded-lg text-red-300 transition"
+                                title="Remove photo"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
 
                           {/* Appwrite Badge */}
@@ -325,10 +418,26 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ control, errors }) =
                       );
                     })}
                   </div>
+
+                  {/* Images Attribute Payload Live Preview Box */}
+                  <div className="bg-slate-950/60 border border-slate-850 rounded-xl p-3.5 flex flex-col gap-2 font-mono text-xs">
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 font-sans border-b border-slate-850 pb-1.5">
+                      <span className="font-bold text-violet-400 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        &quot;images&quot; Attribute Live Payload ({currentImages.length} URL{currentImages.length > 1 ? "s" : ""})
+                      </span>
+                    </div>
+                    <pre className="text-[11px] text-emerald-400/90 overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed bg-slate-950 p-2.5 rounded-lg border border-slate-900">
+                      {JSON.stringify(currentImages, null, 2)}
+                    </pre>
+                  </div>
                 </div>
               ) : (
-                <div className="text-center py-2 select-none">
-                  <p className="text-xs text-slate-500">No images attached yet.</p>
+                <div className="text-center py-3 bg-slate-950/30 border border-dashed border-slate-850 rounded-xl select-none flex flex-col items-center gap-1">
+                  <p className="text-xs text-slate-400">No images attached yet.</p>
+                  <p className="text-[10px] text-slate-500">
+                    Add image URLs or upload files to update the &quot;images&quot; payload attribute in real time.
+                  </p>
                 </div>
               )}
             </div>

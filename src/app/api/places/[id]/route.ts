@@ -127,7 +127,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       openingHours: parsed.openingHours,
       transportType: parsed.transportType,
       coordinates: parsed.coordinates,
-      credits: body.credits,
+      credits: parsed.credits,
     };
 
     // 7. Persist update in repository
