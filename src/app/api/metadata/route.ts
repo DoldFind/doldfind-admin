@@ -36,8 +36,9 @@ export async function GET(request: NextRequest) {
 
     let imageUrl = targetUrl;
     let author = "Unknown Author";
-    let license = "Unknown License";
-    let licenseUrl = "";
+    let authorUrl = "";
+    let license = "CC BY-SA 4.0";
+    let licenseUrl = "https://creativecommons.org/licenses/by-sa/4.0/";
     let title = "";
     let source = isWikimedia ? "Wikimedia Commons" : "Flickr";
 
@@ -67,7 +68,13 @@ export async function GET(request: NextRequest) {
               if (info.extmetadata) {
                 const meta = info.extmetadata;
                 if (meta.Artist?.value) {
-                  author = meta.Artist.value.replace(/<[^>]*>?/gm, "").trim();
+                  const rawArtist = meta.Artist.value;
+                  const $ = cheerio.load(rawArtist);
+                  const link = $("a").attr("href");
+                  if (link) {
+                    authorUrl = link.startsWith("http") ? link : `https://commons.wikimedia.org${link}`;
+                  }
+                  author = $.text().trim() || rawArtist.replace(/<[^>]*>?/gm, "").trim();
                 }
                 if (meta.LicenseShortName?.value) {
                   license = meta.LicenseShortName.value.trim();
@@ -88,6 +95,7 @@ export async function GET(request: NextRequest) {
         // Direct media upload URL on wikimedia
         author = "Wikimedia Commons Contributor";
         license = "CC BY-SA 4.0";
+        licenseUrl = "https://creativecommons.org/licenses/by-sa/4.0/";
       }
     } else if (isFlickr) {
       // Flickr oEmbed & HTML meta extraction
@@ -99,6 +107,7 @@ export async function GET(request: NextRequest) {
         if (oembedRes.ok) {
           const oembedData = await oembedRes.json();
           if (oembedData.author_name) author = oembedData.author_name.trim();
+          if (oembedData.author_url) authorUrl = oembedData.author_url.trim();
           if (oembedData.title) title = oembedData.title.trim();
           if (oembedData.url) imageUrl = oembedData.url;
           else if (oembedData.thumbnail_url) {
@@ -123,16 +132,25 @@ export async function GET(request: NextRequest) {
           const ccLink = $('a[rel="license"]').attr("href");
           if (ccLink) {
             licenseUrl = ccLink;
-            if (ccLink.includes("licenses/by-sa/")) license = "CC BY-SA";
-            else if (ccLink.includes("licenses/by/")) license = "CC BY";
-            else if (ccLink.includes("licenses/by-nc/")) license = "CC BY-NC";
-            else if (ccLink.includes("licenses/by-nd/")) license = "CC BY-ND";
-            else if (ccLink.includes("publicdomain/")) license = "Public Domain";
+            if (ccLink.includes("licenses/by-sa/")) license = "CC BY-SA 4.0";
+            else if (ccLink.includes("licenses/by/")) license = "CC BY 4.0";
+            else if (ccLink.includes("licenses/by-nc/")) license = "CC BY-NC 4.0";
+            else if (ccLink.includes("licenses/by-nd/")) license = "CC BY-ND 4.0";
+            else if (ccLink.includes("publicdomain/")) {
+              license = "Public Domain / CC0";
+              licenseUrl = "https://creativecommons.org/publicdomain/zero/1.0/";
+            }
           }
         }
       } catch (err) {
         Logger.warn(`Flickr HTML cheerio scraping failed: ${err}`);
       }
+    }
+
+    if (!licenseUrl && license.includes("CC BY-SA")) {
+      licenseUrl = "https://creativecommons.org/licenses/by-sa/4.0/";
+    } else if (!licenseUrl && license.includes("CC BY")) {
+      licenseUrl = "https://creativecommons.org/licenses/by/4.0/";
     }
 
     // Construct formatted credit string
@@ -141,6 +159,7 @@ export async function GET(request: NextRequest) {
     return jsonSuccess("Metadata retrieved successfully.", undefined, 200, {
       imageUrl,
       author,
+      authorUrl,
       license,
       licenseUrl,
       sourceUrl: targetUrl,
