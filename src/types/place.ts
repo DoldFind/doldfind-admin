@@ -39,10 +39,22 @@ export interface PlaceDetails {
   credits: string;
 }
 
+export interface ImageCredit {
+  imageIndex: number;
+  imageUrl: string;
+  author: string;
+  authorUrl?: string;
+  source: string;
+  sourceUrl?: string;
+  license: string;
+  licenseUrl?: string;
+  title?: string;
+}
+
 export interface PlaceFormValues {
   placeName: string;
   description: string;
-  credits: string;
+  credits: ImageCredit[];
   placeType: PlaceType | "";
   mainCategory: string;
   categories: string[];

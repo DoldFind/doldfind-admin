@@ -2,6 +2,27 @@ import { z } from "zod";
 
 const coordinateRegex = /^-?\d+(\.\d+)?$/;
 
+export const imageCreditSchema = z.object({
+  imageIndex: z.number().int().min(0),
+  imageUrl: z.string().min(1, { message: "Image URL is required" }),
+  author: z
+    .string()
+    .min(1, { message: "Author name is required" })
+    .max(128, { message: "Author cannot exceed 128 characters" }),
+  authorUrl: z.string().max(500).optional().or(z.literal("")),
+  source: z
+    .string()
+    .min(1, { message: "Source is required" })
+    .max(128, { message: "Source cannot exceed 128 characters" }),
+  sourceUrl: z.string().max(500).optional().or(z.literal("")),
+  license: z
+    .string()
+    .min(1, { message: "License is required" })
+    .max(64, { message: "License cannot exceed 64 characters" }),
+  licenseUrl: z.string().max(500).optional().or(z.literal("")),
+  title: z.string().max(200).optional().or(z.literal("")),
+});
+
 export const placeSchema = z
   .object({
     placeName: z
@@ -12,10 +33,7 @@ export const placeSchema = z
       .string()
       .min(10, { message: "Description must be at least 10 characters long" })
       .max(5000, { message: "Description cannot exceed 5000 characters" }),
-    credits: z
-      .string()
-      .min(1, { message: "Credits & attribution is required" })
-      .max(256, { message: "Credits cannot exceed 256 characters" }),
+    credits: z.array(imageCreditSchema),
     placeType: z.enum(["Spot", "Cafe", "Market", ""]).refine((val) => val === "Spot" || val === "Cafe" || val === "Market", {
       message: "Place type must be Spot, Cafe, or Market",
     }),

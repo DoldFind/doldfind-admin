@@ -92,6 +92,24 @@ export function parseIncomingPayload(data: PlaceFormValues) {
     parseFloat(data.latitude) || 0,
   ];
 
+  let credits = "[]";
+  if (Array.isArray(data.credits)) {
+    const cleanedCredits = data.credits.map((c, idx) => ({
+      imageIndex: typeof c.imageIndex === "number" ? c.imageIndex : idx,
+      imageUrl: cleanString(c.imageUrl),
+      author: cleanString(c.author),
+      authorUrl: cleanString(c.authorUrl || ""),
+      source: cleanString(c.source),
+      sourceUrl: cleanString(c.sourceUrl || ""),
+      license: cleanString(c.license),
+      licenseUrl: cleanString(c.licenseUrl || ""),
+      title: cleanString(c.title || ""),
+    }));
+    credits = JSON.stringify(cleanedCredits);
+  } else if (typeof data.credits === "string") {
+    credits = cleanString(data.credits);
+  }
+
   return {
     placeName,
     description,
@@ -114,6 +132,6 @@ export function parseIncomingPayload(data: PlaceFormValues) {
     openingHours,
     transportType,
     coordinates,
-    credits: cleanString(data.credits || ""),
+    credits,
   };
 }

@@ -29,6 +29,7 @@ import {
   Layers,
   Sun,
   Bus,
+  Sparkles,
 } from "lucide-react";
 import { PlaceDetails } from "@/types/place";
 

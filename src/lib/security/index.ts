@@ -157,7 +157,7 @@ export function hasMaliciousContent(val: string): boolean {
   // HTML tag regex
   const htmlTagRegex = /<[^>]*>/g;
   // Javascript injection e.g. javascript:alert(), onload=, onclick=
-  const jsInjectionRegex = /javascript:|on\w+\s*=/i;
+  const jsInjectionRegex = /javascript:|\bon[a-z]+\s*=/i;
   // Script tags check
   const scriptTagRegex = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
   // Malformed Unicode surrogate check
