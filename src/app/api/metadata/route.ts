@@ -37,16 +37,51 @@ export async function GET(request: NextRequest) {
     let imageUrl = targetUrl;
     let author = "Unknown Author";
     let authorUrl = "";
-    let license = "CC BY-SA 4.0";
-    let licenseUrl = "https://creativecommons.org/licenses/by-sa/4.0/";
+    let license = "Unknown";
+    let licenseUrl = "";
     let title = "";
     let source = isWikimedia ? "Wikimedia Commons" : "Flickr";
+    let sourceUrl = targetUrl;
 
     if (isWikimedia) {
-      // Wikimedia Commons API extraction
-      const fileMatch = targetUrl.match(/File:(.+)$/i);
-      if (fileMatch) {
-        const rawFilename = decodeURIComponent(fileMatch[1].split("#")[0].split("?")[0]);
+      let rawFilename: string | null = null;
+      const pathname = decodeURIComponent(urlObj.pathname);
+
+      // 1. Pathname match: /wiki/File:Filename.jpg or /File:Filename.jpg
+      const fileMatch = pathname.match(/\/(?:wiki\/)?(?:File|Image):(.+)$/i);
+      if (fileMatch?.[1]) {
+        rawFilename = fileMatch[1];
+      }
+
+      // 2. Hash match for media viewer: #/media/File:Filename.jpg
+      if (!rawFilename && urlObj.hash) {
+        const hashDecoded = decodeURIComponent(urlObj.hash);
+        const hashMatch = hashDecoded.match(/#(?:(?:\/media\/)?)(?:File|Image):(.+)$/i);
+        if (hashMatch?.[1]) {
+          rawFilename = hashMatch[1];
+        }
+      }
+
+      // 3. Direct upload URLs and thumbnails
+      if (
+        !rawFilename &&
+        (hostname.includes("upload.wikimedia.org") ||
+          hostname.includes("wikimedia.org") ||
+          hostname.includes("wikipedia.org"))
+      ) {
+        const parts = pathname.split("/").filter(Boolean);
+        const thumbIdx = parts.indexOf("thumb");
+        if (thumbIdx !== -1 && parts.length > thumbIdx + 3) {
+          rawFilename = parts[thumbIdx + 3];
+        } else if (parts.length > 0) {
+          const lastPart = parts[parts.length - 1];
+          if (/\.(jpe?g|png|gif|svg|webp|tiff?|ogg|ogv)$/i.test(lastPart)) {
+            rawFilename = lastPart;
+          }
+        }
+      }
+
+      if (rawFilename) {
         const apiUrl = `https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=extmetadata|url&titles=File:${encodeURIComponent(
           rawFilename
         )}&format=json`;
@@ -61,9 +96,10 @@ export async function GET(request: NextRequest) {
           if (pages) {
             const pageId = Object.keys(pages)[0];
             const page = pages[pageId];
-            if (page && page.imageinfo && page.imageinfo.length > 0) {
+            if (page && pageId !== "-1" && page.imageinfo && page.imageinfo.length > 0) {
               const info = page.imageinfo[0];
               if (info.url) imageUrl = info.url;
+              if (info.descriptionurl) sourceUrl = info.descriptionurl;
 
               if (info.extmetadata) {
                 const meta = info.extmetadata;
@@ -72,30 +108,40 @@ export async function GET(request: NextRequest) {
                   const $ = cheerio.load(rawArtist);
                   const link = $("a").attr("href");
                   if (link) {
-                    authorUrl = link.startsWith("http") ? link : `https://commons.wikimedia.org${link}`;
+                    if (link.startsWith("//")) {
+                      authorUrl = `https:${link}`;
+                    } else if (link.startsWith("http")) {
+                      authorUrl = link;
+                    } else {
+                      authorUrl = `https://commons.wikimedia.org${link}`;
+                    }
                   }
-                  author = $.text().trim() || rawArtist.replace(/<[^>]*>?/gm, "").trim();
+                  const parsedAuthor = $.text().trim() || rawArtist.replace(/<[^>]*>?/gm, "").trim();
+                  if (parsedAuthor) {
+                    author = parsedAuthor;
+                  }
                 }
+
                 if (meta.LicenseShortName?.value) {
                   license = meta.LicenseShortName.value.trim();
                 } else if (meta.License?.value) {
                   license = meta.License.value.toUpperCase().trim();
                 }
+
                 if (meta.LicenseUrl?.value) {
-                  licenseUrl = meta.LicenseUrl.value.trim();
+                  const rawLicUrl = meta.LicenseUrl.value.trim();
+                  licenseUrl = rawLicUrl.startsWith("//") ? `https:${rawLicUrl}` : rawLicUrl;
                 }
+
                 if (meta.ObjectName?.value) {
                   title = meta.ObjectName.value.trim();
+                } else {
+                  title = rawFilename.replace(/\.[^/.]+$/, "").replace(/_/g, " ").trim();
                 }
               }
             }
           }
         }
-      } else {
-        // Direct media upload URL on wikimedia
-        author = "Wikimedia Commons Contributor";
-        license = "CC BY-SA 4.0";
-        licenseUrl = "https://creativecommons.org/licenses/by-sa/4.0/";
       }
     } else if (isFlickr) {
       // Flickr oEmbed & HTML meta extraction
@@ -147,14 +193,25 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (!licenseUrl && license.includes("CC BY-SA")) {
-      licenseUrl = "https://creativecommons.org/licenses/by-sa/4.0/";
-    } else if (!licenseUrl && license.includes("CC BY")) {
-      licenseUrl = "https://creativecommons.org/licenses/by/4.0/";
+    if (!licenseUrl && license !== "Unknown") {
+      if (license.includes("CC BY-SA 3.0")) {
+        licenseUrl = "https://creativecommons.org/licenses/by-sa/3.0/";
+      } else if (license.includes("CC BY-SA")) {
+        licenseUrl = "https://creativecommons.org/licenses/by-sa/4.0/";
+      } else if (license.includes("CC BY 3.0")) {
+        licenseUrl = "https://creativecommons.org/licenses/by/3.0/";
+      } else if (license.includes("CC BY")) {
+        licenseUrl = "https://creativecommons.org/licenses/by/4.0/";
+      }
     }
 
     // Construct formatted credit string
-    const creditString = `${author} (${license})`;
+    const creditString =
+      license !== "Unknown"
+        ? `${author} (${license})`
+        : author !== "Unknown Author"
+        ? author
+        : "Unattributed";
 
     return jsonSuccess("Metadata retrieved successfully.", undefined, 200, {
       imageUrl,
@@ -162,7 +219,7 @@ export async function GET(request: NextRequest) {
       authorUrl,
       license,
       licenseUrl,
-      sourceUrl: targetUrl,
+      sourceUrl,
       title,
       source,
       creditString,
