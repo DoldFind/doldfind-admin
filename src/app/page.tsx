@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { PlaceForm } from "@/components/PlaceForm";
-import { Compass, MapPin, LogOut } from "lucide-react";
 
 interface SessionInfo {
   username: string;
@@ -69,7 +68,7 @@ export default function Home() {
       } else {
         setLoginError(data.error?.message || "Invalid username or password.");
       }
-    } catch (err) {
+    } catch {
       setLoginError("Failed to connect to authentication server. Try again.");
     } finally {
       setLoginLoading(false);
@@ -94,18 +93,8 @@ export default function Home() {
   // 1. Initial Checking Session Loading View
   if (checkingSession) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center relative">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/10 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-violet-900/10 blur-[150px] pointer-events-none" />
-
-        <div className="flex flex-col items-center gap-4 select-none">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/25 animate-pulse">
-            <Compass className="w-6 h-6 text-white animate-spin-slow" />
-          </div>
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">
-            Checking Session...
-          </span>
-        </div>
+      <div className="min-h-screen bg-[#0e0e0e] flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
       </div>
     );
   }
@@ -113,37 +102,23 @@ export default function Home() {
   // 2. Unauthenticated Login Screen View
   if (!session) {
     return (
-      <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-950 px-4">
-        {/* Decorative Background Auras */}
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/10 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-violet-900/10 blur-[150px] pointer-events-none" />
-
-        <div className="w-full max-w-md bg-slate-900/40 border border-slate-850/80 rounded-2xl p-8 backdrop-blur-xl shadow-2xl flex flex-col gap-6 relative z-10 animate-slideDown">
-          {/* Header */}
-          <div className="flex flex-col items-center gap-2 select-none">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
-              <Compass className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="font-extrabold tracking-tight text-base text-slate-100 uppercase">
-                DoldFind
-              </span>
-              <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
-                Founder Authentication
-              </span>
-            </div>
+      <main className="min-h-screen flex items-center justify-center bg-[#0e0e0e] px-4">
+        <div className="w-full max-w-sm border border-white/10 rounded-xl p-6 bg-[#0e0e0e] flex flex-col gap-6">
+          <div className="text-center">
+            <span className="font-bold tracking-tight text-lg text-white">
+              DoldFind
+            </span>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             {loginError && (
-              <div className="bg-red-950/30 border border-red-900/50 rounded-lg p-3 text-xs font-semibold text-red-400 animate-fadeIn">
+              <div className="border border-red-500/40 bg-red-950/20 rounded-lg p-2.5 text-xs text-red-400">
                 {loginError}
               </div>
             )}
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none">
+              <label className="text-[11px] font-medium text-neutral-400 select-none">
                 Username
               </label>
               <input
@@ -151,13 +126,12 @@ export default function Home() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-200"
-                placeholder="Enter your username"
+                className="w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-white transition-colors"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none">
+              <label className="text-[11px] font-medium text-neutral-400 select-none">
                 Password
               </label>
               <input
@@ -165,24 +139,16 @@ export default function Home() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all duration-200"
-                placeholder="••••••••"
+                className="w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-white transition-colors"
               />
             </div>
 
             <button
               type="submit"
               disabled={loginLoading}
-              className="mt-2 w-full py-2.5 text-xs font-bold text-white rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 active:scale-[0.98] transition-all duration-200 shadow-md shadow-violet-500/10 flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+              className="mt-2 w-full py-2 text-xs font-semibold text-black rounded-lg bg-white hover:bg-neutral-200 active:scale-[0.98] transition-all disabled:opacity-40"
             >
-              {loginLoading ? (
-                <>
-                  <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Authenticating...
-                </>
-              ) : (
-                "Log In"
-              )}
+              {loginLoading ? "Authenticating..." : "Log In"}
             </button>
           </form>
         </div>
@@ -192,108 +158,67 @@ export default function Home() {
 
   // 3. Authenticated Contributor Dashboard View
   return (
-    <main className="relative min-h-screen flex flex-col justify-between overflow-hidden">
-      {/* Decorative Background Auras */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-violet-900/10 blur-[150px] pointer-events-none" />
-      <div className="absolute top-[40%] right-[20%] w-[30%] h-[30%] rounded-full bg-sky-900/5 blur-[100px] pointer-events-none" />
-
+    <main className="min-h-screen flex flex-col justify-between bg-[#0e0e0e] text-white">
       {/* Header Navigation */}
-      <header className="border-b border-slate-900 bg-slate-950/60 backdrop-blur-xl sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <header className="border-b border-white/10 bg-[#0e0e0e]/90 backdrop-blur sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:scale-105 transition-all">
-                <Compass className="w-5 h-5 text-white animate-spin-slow" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-extrabold tracking-tight text-sm text-slate-100 uppercase">
-                  DoldFind
-                </span>
-                <span className="text-[10px] text-slate-400 font-semibold tracking-widest uppercase">
-                  Admin Portal
-                </span>
-              </div>
+            <Link href="/" className="font-bold text-sm tracking-tight text-white">
+              DoldFind
             </Link>
 
             {/* Main Tabs */}
-            <nav className="hidden md:flex items-center gap-4 text-xs font-bold uppercase tracking-wider">
-              <Link href="/" className="text-violet-400 border-b-2 border-violet-500 px-3 py-1">
-                Contribute Spot
+            <nav className="hidden md:flex items-center gap-5 text-xs">
+              <Link href="/" className="text-white border-b border-white pb-0.5 font-medium">
+                Contribute
               </Link>
-              <Link href="/places" className="text-slate-400 hover:text-slate-200 transition px-3 py-1">
-                Manage Database
+              <Link href="/places" className="text-neutral-400 hover:text-white transition">
+                Places
               </Link>
             </nav>
           </div>
 
-          {/* Active Founder Profile & Logout */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2.5 select-none">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-500/20 to-indigo-500/20 border border-violet-850 flex items-center justify-center font-bold text-xs text-violet-300 uppercase shadow-[0_0_8px_rgba(124,58,237,0.1)]">
-                {session.username.substring(0, 2)}
-              </div>
-              <div className="hidden sm:flex flex-col">
-                <span className="text-xs font-bold text-slate-200">{session.username}</span>
-                <span className="text-[9px] font-bold text-violet-400 tracking-wider uppercase">
-                  {session.badge}
-                </span>
-              </div>
-            </div>
-
+          {/* User & Logout */}
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-neutral-400">{session.username}</span>
             <button
               onClick={handleLogout}
               disabled={logoutLoading}
-              className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[10px] font-bold text-slate-400 hover:text-slate-200 py-1.5 px-3 rounded-lg transition-all duration-200 disabled:opacity-50"
+              className="border border-white/15 text-neutral-300 hover:text-white hover:bg-white/5 py-1 px-2.5 rounded text-xs transition disabled:opacity-50"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              {logoutLoading ? "Signing out..." : "Log Out"}
+              {logoutLoading ? "..." : "Log Out"}
             </button>
           </div>
         </div>
+
         {/* Mobile Navigation sub-bar */}
-        <div className="md:hidden border-t border-slate-900 bg-slate-950/30">
-          <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-6 h-10 text-[10px] font-bold uppercase tracking-wider select-none">
-            <Link href="/" className="text-violet-400 border-b-2 border-violet-500 px-2 py-1.5 transition">
-              Contribute Spot
+        <div className="md:hidden border-t border-white/10">
+          <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-6 h-9 text-xs">
+            <Link href="/" className="text-white border-b border-white">
+              Contribute
             </Link>
-            <Link href="/places" className="text-slate-400 hover:text-slate-200 transition px-2 py-1.5">
-              Manage Database
+            <Link href="/places" className="text-neutral-400 hover:text-white transition">
+              Places
             </Link>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 relative z-10">
-        {/* Banner Section */}
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-violet-400 tracking-wider uppercase select-none">
-            <MapPin className="w-3.5 h-3.5" />
-            Spot Discovery
-          </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight animate-slideDown">
-            Create Contributor Entry
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-tight">
+            Contribute Spot
           </h1>
-          <p className="text-sm text-slate-400 max-w-3xl leading-relaxed">
-            Contribute new scenic spots, hikes, viewpoints, or historical markers. Fill out descriptions, coordinates, categories, and custom information cards. Submissions are verified before being published.
-          </p>
         </div>
 
         {/* Form Orchestrator */}
         <PlaceForm />
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/40 py-6 mt-12 relative z-10 select-none">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-550">
-          <p>&copy; {new Date().getFullYear()} DoldFind. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <a href="#" className="hover:text-slate-350 transition-colors">Documentation</a>
-            <a href="#" className="hover:text-slate-350 transition-colors">Guidelines</a>
-            <a href="#" className="hover:text-slate-350 transition-colors">Terms of Service</a>
-          </div>
-        </div>
+      {/* Minimal Footer */}
+      <footer className="border-t border-white/10 py-5 mt-12 text-center text-xs text-neutral-600">
+        &copy; {new Date().getFullYear()} DoldFind
       </footer>
     </main>
   );

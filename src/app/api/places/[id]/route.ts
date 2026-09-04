@@ -62,10 +62,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return jsonError("BAD_REQUEST", "Payload size limit exceeded.", 400);
     }
 
-    let body: any;
+    let body: unknown;
     try {
       body = JSON.parse(bodyText);
-    } catch (parseErr) {
+    } catch {
       return jsonError("BAD_REQUEST", "Invalid JSON format.", 400);
     }
 
@@ -118,9 +118,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       crowdLevel: parsed.crowdLevel,
       safetyNote: parsed.safetyNote,
       entryFee: parsed.entryFee,
-      likes: Number(body.likes ?? 0),
-      saves: Number(body.saves ?? 0),
-      visited: Number(body.visited ?? 0),
+      likes: Number((body && typeof body === "object" && "likes" in body ? (body as Record<string, unknown>).likes : 0) ?? 0),
+      saves: Number((body && typeof body === "object" && "saves" in body ? (body as Record<string, unknown>).saves : 0) ?? 0),
+      visited: Number((body && typeof body === "object" && "visited" in body ? (body as Record<string, unknown>).visited : 0) ?? 0),
       uploaderId: username,
       uploaderBadge: badge,
       bestSeason: parsed.bestSeason,

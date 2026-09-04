@@ -46,10 +46,10 @@ export async function POST(request: NextRequest) {
       return jsonError("BAD_REQUEST", "Payload size limit exceeded.", 400);
     }
 
-    let body: any;
+    let body: unknown;
     try {
       body = JSON.parse(bodyText);
-    } catch (parseErr) {
+    } catch {
       return jsonError("BAD_REQUEST", "Invalid JSON format.", 400);
     }
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (!parseResult.success) {
       AuditLogger.log({
         event: "VALIDATION_FAILED",
-        username: (body && typeof body === "object" ? body.username : "Unknown") || "Unknown",
+        username: (body && typeof body === "object" && "username" in body && typeof body.username === "string" ? body.username : "Unknown"),
         ip,
         userAgent,
         details: { errors: "Validation failed (fields sanitized)." },
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       const statusCode = authResult.errorCode === "LOCKOUT" ? 423 : 401;
       return jsonError(authResult.errorCode || "UNAUTHORIZED", authResult.errorMessage, statusCode);
     }
-  } catch (error) {
+  } catch {
     AuditLogger.log({
       event: "AUTH_FAILED",
       username: "Anonymous",

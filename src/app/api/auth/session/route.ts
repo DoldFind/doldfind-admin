@@ -1,8 +1,7 @@
-import { NextRequest } from "next/server";
 import { getSession, renewSessionCookieIfNeeded } from "@/lib/auth/session";
 import { jsonSuccess, jsonError } from "@/lib/utils/response";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getSession();
     if (!session) {
@@ -20,7 +19,7 @@ export async function GET(request: NextRequest) {
     res.headers.set("Pragma", "no-cache");
     res.headers.set("Expires", "0");
     return res;
-  } catch (error) {
+  } catch {
     return jsonError("INTERNAL_ERROR", "Failed to retrieve session.", 500);
   }
 }

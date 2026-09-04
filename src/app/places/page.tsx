@@ -1,58 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { PlaceForm } from "@/components/PlaceForm";
 import {
-  Compass,
-  MapPin,
-  LogOut,
   Search,
   Trash2,
   Edit3,
   Plus,
   ChevronLeft,
   ChevronRight,
-  Clock,
-  Coins,
-  Users,
-  AlertTriangle,
-  CheckCircle2,
   X,
   RefreshCw,
-  Tag,
-  User,
-  Heart,
-  Bookmark,
-  Eye,
-  Calendar,
-  Layers,
-  Sun,
-  Bus,
-  Sparkles,
 } from "lucide-react";
 import { PlaceDetails } from "@/types/place";
-
-function formatOpeningHoursSummary(openingHoursStr?: string): string {
-  if (!openingHoursStr) return "N/A";
-  try {
-    const parsed = JSON.parse(openingHoursStr);
-    if (parsed && typeof parsed === "object") {
-      if (parsed.mode === "24h") return "24 Hours";
-      if (parsed.mode === "same") return `${parsed.sameTime?.start} - ${parsed.sameTime?.end}`;
-      if (parsed.mode === "custom") {
-        const openDays = Object.entries(parsed.days || {})
-          .filter(([_, d]: any) => d.status === "open")
-          .map(([day]) => day.substring(0, 3));
-        if (openDays.length === 0) return "Closed all days";
-        return `Custom (${openDays.join(", ")})`;
-      }
-    }
-  } catch (e) {
-    if (openingHoursStr === "Open 24 Hours") return "24 Hours";
-  }
-  return openingHoursStr || "N/A";
-}
 
 interface SessionInfo {
   username: string;
@@ -116,7 +77,7 @@ export default function PlacesManagement() {
   }, []);
 
   // Fetch places
-  const fetchPlaces = async () => {
+  const fetchPlaces = useCallback(async () => {
     setLoading(true);
     setApiError(null);
     try {
@@ -127,17 +88,35 @@ export default function PlacesManagement() {
       } else {
         setApiError(data.error?.message || "Failed to load places.");
       }
-    } catch (err) {
-      setApiError("Network error. Failed to load places from storage.");
+    } catch {
+      setApiError("Network error. Failed to load places.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (session) {
-      fetchPlaces();
-    }
+    if (!session) return;
+    let active = true;
+    fetch("/api/places")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active) return;
+        if (data.success) {
+          setPlaces(data.data || []);
+        } else {
+          setApiError(data.error?.message || "Failed to load places.");
+        }
+      })
+      .catch(() => {
+        if (active) setApiError("Network error. Failed to load places.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [session]);
 
   // Debounce search input
@@ -189,7 +168,7 @@ export default function PlacesManagement() {
       } else {
         showToast(result.error?.message || "Failed to delete place.", "error");
       }
-    } catch (err) {
+    } catch {
       showToast("Network error. Failed to delete place.", "error");
     } finally {
       setDeletingPlace(null);
@@ -300,32 +279,19 @@ export default function PlacesManagement() {
 
   if (checkingSession) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center relative">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/10 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-violet-900/10 blur-[150px] pointer-events-none" />
-        <div className="flex flex-col items-center gap-4 select-none">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/25 animate-pulse">
-            <Compass className="w-6 h-6 text-white animate-spin-slow" />
-          </div>
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">
-            Checking Session...
-          </span>
-        </div>
+      <div className="min-h-screen bg-[#0e0e0e] flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!session) {
     return (
-      <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-8 max-w-sm text-center flex flex-col gap-4">
-          <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto" />
-          <h2 className="text-lg font-bold text-slate-200">Unauthenticated Access</h2>
-          <p className="text-xs text-slate-400">
-            Please log in from the main administrator home page to access the database management dashboard.
-          </p>
-          <Link href="/" className="px-4 py-2 bg-violet-600 text-white rounded-lg text-xs font-bold hover:bg-violet-500 transition">
-            Go to Login
+      <main className="min-h-screen bg-[#0e0e0e] flex flex-col items-center justify-center p-4">
+        <div className="bg-[#0e0e0e] border border-white/10 rounded-xl p-6 max-w-xs text-center flex flex-col gap-4">
+          <h2 className="text-sm font-semibold text-white">Authentication Required</h2>
+          <Link href="/" className="px-4 py-2 bg-white text-black rounded-lg text-xs font-semibold hover:bg-neutral-200 transition">
+            Log In
           </Link>
         </div>
       </main>
@@ -333,226 +299,169 @@ export default function PlacesManagement() {
   }
 
   return (
-    <main className="relative min-h-screen flex flex-col justify-between overflow-hidden">
-      {/* Background Auras */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-violet-900/10 blur-[150px] pointer-events-none" />
-
+    <main className="min-h-screen flex flex-col justify-between bg-[#0e0e0e] text-white">
       {/* Toast Notification */}
       {toast && (
-        <div className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-xl border backdrop-blur-xl shadow-2xl flex items-center gap-2.5 text-xs font-bold animate-slideDown ${
-          toast.type === "success"
-            ? "bg-emerald-950/80 border-emerald-800 text-emerald-300"
-            : "bg-red-950/80 border-red-800 text-red-300"
-        }`}>
-          {toast.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 text-red-400" />}
-          <span>{toast.message}</span>
+        <div className="fixed top-5 right-5 z-50 px-3.5 py-2 rounded-lg border border-white/20 bg-[#171717] text-white text-xs font-medium shadow-xl animate-fadeIn">
+          {toast.message}
         </div>
       )}
 
       {/* Header Navigation */}
-      <header className="border-b border-slate-900 bg-slate-950/60 backdrop-blur-xl sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <header className="border-b border-white/10 bg-[#0e0e0e]/90 backdrop-blur sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:scale-105 transition-all">
-                <Compass className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-extrabold tracking-tight text-sm text-slate-100 uppercase">
-                  DoldFind
-                </span>
-                <span className="text-[10px] text-slate-400 font-semibold tracking-widest uppercase">
-                  Admin Portal
-                </span>
-              </div>
+            <Link href="/" className="font-bold text-sm tracking-tight text-white">
+              DoldFind
             </Link>
 
-            <nav className="hidden md:flex items-center gap-4 text-xs font-bold uppercase tracking-wider">
-              <Link href="/" className="text-slate-400 hover:text-slate-200 transition px-3 py-1">
-                Contribute Spot
+            <nav className="hidden md:flex items-center gap-5 text-xs">
+              <Link href="/" className="text-neutral-400 hover:text-white transition">
+                Contribute
               </Link>
-              <Link href="/places" className="text-violet-400 border-b-2 border-violet-500 px-3 py-1">
-                Manage Database
+              <Link href="/places" className="text-white border-b border-white pb-0.5 font-medium">
+                Places
               </Link>
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2.5 select-none">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-500/20 to-indigo-500/20 border border-violet-850 flex items-center justify-center font-bold text-xs text-violet-300 uppercase">
-                {session.username.substring(0, 2)}
-              </div>
-              <div className="hidden sm:flex flex-col">
-                <span className="text-xs font-bold text-slate-200">{session.username}</span>
-                <span className="text-[9px] font-bold text-violet-400 tracking-wider uppercase">
-                  {session.badge}
-                </span>
-              </div>
-            </div>
-
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-neutral-400">{session.username}</span>
             <button
               onClick={handleLogout}
               disabled={logoutLoading}
-              className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[10px] font-bold text-slate-400 hover:text-slate-200 py-1.5 px-3 rounded-lg transition"
+              className="border border-white/15 text-neutral-300 hover:text-white hover:bg-white/5 py-1 px-2.5 rounded text-xs transition disabled:opacity-50"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              {logoutLoading ? "Signing out..." : "Log Out"}
+              {logoutLoading ? "..." : "Log Out"}
             </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation sub-bar */}
+        <div className="md:hidden border-t border-white/10">
+          <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-6 h-9 text-xs">
+            <Link href="/" className="text-neutral-400 hover:text-white transition">
+              Contribute
+            </Link>
+            <Link href="/places" className="text-white border-b border-white">
+              Places
+            </Link>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6 relative z-10">
-        
-        {/* Title Banner */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-900 pb-5">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-violet-400 tracking-wider uppercase flex items-center gap-1.5">
-              <Tag className="w-3.5 h-3.5" />
-              Database Registry
-            </span>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight">
-              Places Management
-            </h1>
-            <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
-              Read, edit, and remove places conforming to the DoldFind schema.
-            </p>
-          </div>
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-5">
+        {/* Title Header */}
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <h1 className="text-xl font-bold text-white tracking-tight">
+            Places
+          </h1>
 
-          <Link href="/" className="w-fit flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-lg hover:scale-105 active:scale-95 transition-all">
-            <Plus className="w-4 h-4" />
-            Add New Place
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 bg-white text-black text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add Place
           </Link>
         </div>
 
-        {/* Search & Filters Box */}
-        <div className="bg-slate-900/40 border border-slate-850 rounded-xl p-5 backdrop-blur-md flex flex-col gap-4">
-          
-          <div className="flex items-center gap-3 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 focus-within:border-violet-500 focus-within:ring-1 focus-within:ring-violet-500 transition">
-            <Search className="w-4 h-4 text-slate-500 flex-shrink-0" />
+        {/* Search & Filters */}
+        <div className="bg-[#121212]/60 border border-white/10 rounded-xl p-3 flex flex-col gap-2.5">
+          <div className="flex items-center gap-2 bg-[#141414] border border-white/10 rounded-lg px-3 py-1.5">
+            <Search className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
             <input
               type="text"
-              placeholder="Search by place name, city, area, state, type, category, or ID..."
+              placeholder="Search places..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-transparent border-none outline-none text-xs text-slate-200 w-full focus:ring-0 p-0"
+              className="bg-transparent border-none outline-none text-xs text-white w-full focus:ring-0 p-0 placeholder:text-neutral-600"
             />
             {search && (
-              <button onClick={() => setSearch("")} className="p-1 hover:text-slate-200 text-slate-500 transition">
-                <X className="w-3.5 h-3.5" />
+              <button onClick={() => setSearch("")} className="p-0.5 text-neutral-400 hover:text-white">
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-            
-            {/* Place Type */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Place Type</label>
-              <select
-                value={filterPlaceType}
-                onChange={(e) => { setFilterPlaceType(e.target.value); setCurrentPage(1); }}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-violet-500 transition"
-              >
-                <option value="">All Types</option>
-                <option value="Spot">Spot</option>
-                <option value="Cafe">Cafe</option>
-                <option value="Market">Market</option>
-              </select>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+            <select
+              value={filterPlaceType}
+              onChange={(e) => { setFilterPlaceType(e.target.value); setCurrentPage(1); }}
+              className="bg-[#141414] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-white transition"
+            >
+              <option value="">All Types</option>
+              <option value="Spot">Spot</option>
+              <option value="Cafe">Cafe</option>
+              <option value="Market">Market</option>
+            </select>
 
-            {/* Main Category */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Main Category</label>
-              <select
-                value={filterMainCategory}
-                onChange={(e) => { setFilterMainCategory(e.target.value); setCurrentPage(1); }}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-violet-500 transition"
-              >
-                <option value="">All Main Categories</option>
-                {uniqueMainCategories.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={filterMainCategory}
+              onChange={(e) => { setFilterMainCategory(e.target.value); setCurrentPage(1); }}
+              className="bg-[#141414] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-white transition"
+            >
+              <option value="">All Categories</option>
+              {uniqueMainCategories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
 
-            {/* City */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">City</label>
-              <select
-                value={filterCity}
-                onChange={(e) => { setFilterCity(e.target.value); setCurrentPage(1); }}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-violet-500 transition"
-              >
-                <option value="">All Cities</option>
-                {uniqueCities.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={filterCity}
+              onChange={(e) => { setFilterCity(e.target.value); setCurrentPage(1); }}
+              className="bg-[#141414] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-white transition"
+            >
+              <option value="">All Cities</option>
+              {uniqueCities.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
 
-            {/* State */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">State</label>
-              <select
-                value={filterState}
-                onChange={(e) => { setFilterState(e.target.value); setCurrentPage(1); }}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-violet-500 transition"
-              >
-                <option value="">All States</option>
-                {uniqueStates.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={filterState}
+              onChange={(e) => { setFilterState(e.target.value); setCurrentPage(1); }}
+              className="bg-[#141414] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-white transition"
+            >
+              <option value="">All States</option>
+              {uniqueStates.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
 
-            {/* Category Tag */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Category Tag</label>
-              <select
-                value={filterCategory}
-                onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-violet-500 transition"
-              >
-                <option value="">All Tags</option>
-                {uniqueCategories.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={filterCategory}
+              onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
+              className="bg-[#141414] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-white transition"
+            >
+              <option value="">All Tags</option>
+              {uniqueCategories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
 
-            {/* Uploader */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Uploader</label>
-              <select
-                value={filterUploader}
-                onChange={(e) => { setFilterUploader(e.target.value); setCurrentPage(1); }}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-violet-500 transition"
-              >
-                <option value="">All Uploaders</option>
-                {uniqueUploaders.map((u) => (
-                  <option key={u} value={u}>{u}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={filterUploader}
+              onChange={(e) => { setFilterUploader(e.target.value); setCurrentPage(1); }}
+              className="bg-[#141414] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-white transition"
+            >
+              <option value="">All Uploaders</option>
+              {uniqueUploaders.map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
 
-            {/* Sorting */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sort By</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-violet-500 transition"
-              >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="a-z">A-Z (Alphabetical)</option>
-                <option value="z-a">Z-A (Alphabetical)</option>
-              </select>
-            </div>
-
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="bg-[#141414] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-white transition"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="a-z">A-Z</option>
+              <option value="z-a">Z-A</option>
+            </select>
           </div>
 
           {(filterPlaceType || filterCategory || filterMainCategory || filterCity || filterState || filterUploader || search) && (
@@ -567,257 +476,146 @@ export default function PlacesManagement() {
                 setFilterUploader("");
                 setSortBy("newest");
               }}
-              className="text-[11px] font-bold text-violet-400 hover:text-violet-300 self-end flex items-center gap-1 mt-1 transition"
+              className="text-[11px] text-neutral-400 hover:text-white self-end flex items-center gap-1 transition"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Reset Filters
+              <RefreshCw className="w-3 h-3" />
+              Reset
             </button>
           )}
-
         </div>
 
-        {/* Loading */}
+        {/* Loading State */}
         {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-slate-900/20 border border-slate-850 rounded-xl p-5 flex flex-col gap-4 animate-pulse">
-                <div className="h-4 bg-slate-800 rounded w-2/3" />
-                <div className="flex gap-2">
-                  <div className="h-5 bg-slate-800 rounded w-16" />
-                  <div className="h-5 bg-slate-800 rounded w-20" />
-                </div>
-                <div className="space-y-2 py-2">
-                  <div className="h-3 bg-slate-800 rounded w-full" />
-                  <div className="h-3 bg-slate-800 rounded w-5/6" />
-                </div>
+              <div key={i} className="bg-[#141414] border border-white/10 rounded-xl p-4 flex flex-col gap-3 animate-pulse">
+                <div className="h-4 bg-white/10 rounded w-2/3" />
+                <div className="h-3 bg-white/5 rounded w-1/3" />
+                <div className="h-16 bg-white/5 rounded w-full mt-2" />
               </div>
             ))}
           </div>
         )}
 
-        {/* Error */}
+        {/* Error State */}
         {!loading && apiError && (
-          <div className="bg-red-950/20 border border-red-900/50 rounded-xl p-6 text-center flex flex-col gap-2 max-w-xl mx-auto my-10">
-            <AlertTriangle className="w-10 h-10 text-red-400 mx-auto" />
-            <h3 className="text-sm font-bold text-red-300">Failed to Retrieve Records</h3>
-            <p className="text-xs text-red-400/80 leading-relaxed">{apiError}</p>
+          <div className="border border-red-500/30 bg-red-950/20 rounded-xl p-5 text-center flex flex-col gap-2 max-w-md mx-auto my-8">
+            <p className="text-xs text-red-400">{apiError}</p>
             <button
               onClick={fetchPlaces}
-              className="mt-3 px-4 py-2 bg-red-900/40 hover:bg-red-900/60 border border-red-800 text-xs font-bold text-red-300 rounded-lg w-fit mx-auto transition"
+              className="mt-2 px-3 py-1.5 bg-[#171717] border border-white/10 text-xs text-white rounded-lg w-fit mx-auto hover:bg-[#222] transition"
             >
-              Retry Connection
+              Retry
             </button>
           </div>
         )}
 
-        {/* Empty */}
+        {/* Empty State */}
         {!loading && !apiError && filteredPlaces.length === 0 && (
-          <div className="text-center py-16 border border-dashed border-slate-850 rounded-2xl flex flex-col items-center justify-center gap-4 bg-slate-900/5 backdrop-blur-md max-w-lg mx-auto w-full my-6 select-none animate-fadeIn">
-            <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-850 flex items-center justify-center">
-              <Compass className="w-8 h-8 text-slate-600 animate-spin-slow" />
-            </div>
-            <div className="flex flex-col gap-1 max-w-xs">
-              <h3 className="text-sm font-bold text-slate-300">No places found</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                We couldn&apos;t find any records matching your search criteria.
-              </p>
-            </div>
-            <Link href="/" className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-bold transition">
+          <div className="text-center py-16 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-3 my-6">
+            <p className="text-xs text-neutral-400">No places found.</p>
+            <Link href="/" className="px-3 py-1.5 bg-white text-black rounded-lg text-xs font-semibold hover:bg-neutral-200 transition">
               Add Place
             </Link>
           </div>
         )}
 
-        {/* Places Cards Grid */}
+        {/* Places Grid */}
         {!loading && !apiError && filteredPlaces.length > 0 && (
-          <div className="flex flex-col gap-6">
-            <div className="text-xs text-slate-400">
-              Showing <span className="font-bold text-slate-200">{paginatedPlaces.length}</span> of <span className="font-bold text-slate-200">{filteredPlaces.length}</span> registered places.
+          <div className="flex flex-col gap-5">
+            <div className="text-xs text-neutral-500">
+              {filteredPlaces.length} places
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {paginatedPlaces.map((place) => (
                 <div
                   key={place.id}
-                  className="bg-slate-900/30 border border-slate-850 rounded-xl p-5 md:p-6 backdrop-blur-sm flex flex-col gap-4 hover:border-slate-750/80 hover:bg-slate-900/50 hover:shadow-2xl hover:shadow-violet-950/5 group transition-all duration-300 relative overflow-hidden"
+                  className="bg-[#141414] border border-white/10 rounded-xl p-4 flex flex-col gap-3 hover:border-white/20 transition group overflow-hidden"
                 >
-                  {/* Primary Image Banner */}
                   {place.images && place.images.length > 0 && (
-                    <div className="relative -mx-5 -mt-5 md:-mx-6 md:-mt-6 h-36 bg-slate-950 overflow-hidden border-b border-slate-850">
+                    <div className="relative -mx-4 -mt-4 h-36 bg-black overflow-hidden border-b border-white/10">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={place.images[0]}
                         alt={place.placeName}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                       />
-                      {place.images.length > 1 && (
-                        <span className="absolute bottom-2 right-2 bg-slate-950/80 backdrop-blur-md text-slate-300 border border-slate-800 text-[9px] font-bold px-2 py-0.5 rounded-md">
-                          📷 +{place.images.length - 1} photos
-                        </span>
-                      )}
                     </div>
                   )}
+
                   <div className="flex flex-col gap-1.5">
-                    <div className="flex justify-between items-start gap-3">
-                      <h3 className="text-sm font-bold text-slate-200 group-hover:text-violet-400 transition duration-200 line-clamp-1">
+                    <div className="flex justify-between items-start gap-2">
+                      <h3 className="text-sm font-semibold text-white line-clamp-1">
                         {place.placeName}
                       </h3>
                       
-                      <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="flex items-center gap-1 flex-shrink-0">
                         <button
                           onClick={() => setSelectedPlace(place)}
-                          className="p-1.5 text-slate-400 hover:text-violet-400 bg-slate-950/60 border border-slate-800/80 hover:border-violet-500/20 rounded-md transition"
-                          title="Edit Place"
+                          className="p-1 text-neutral-400 hover:text-white rounded transition"
+                          title="Edit"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => setDeletingPlace(place)}
-                          className="p-1.5 text-slate-400 hover:text-red-400 bg-slate-950/60 border border-slate-800/80 hover:border-red-500/20 rounded-md transition"
-                          title="Delete Place"
+                          className="p-1 text-neutral-400 hover:text-red-400 rounded transition"
+                          title="Delete"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Type & Categories Chips */}
-                    <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                      <span className="bg-violet-950/60 border border-violet-800 text-violet-300 text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full select-none">
+                    <div className="flex flex-wrap items-center gap-1">
+                      <span className="bg-white/10 text-white text-[10px] font-medium px-2 py-0.5 rounded">
                         {place.placeType || "Spot"}
                       </span>
                       {place.mainCategory && (
-                        <span className="bg-indigo-950/50 border border-indigo-850 text-indigo-300 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full select-none">
+                        <span className="bg-white/5 text-neutral-300 text-[10px] px-2 py-0.5 rounded border border-white/10">
                           {place.mainCategory}
                         </span>
                       )}
-                      {(place.categories || []).slice(0, 2).map((cat) => (
-                        <span
-                          key={cat}
-                          className="bg-slate-950/80 border border-slate-850 text-slate-400 text-[9px] font-semibold px-2 py-0.5 rounded-full select-none"
-                        >
-                          {cat}
-                        </span>
-                      ))}
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-400/90 leading-relaxed line-clamp-2 select-text py-0.5">
-                    {place.description}
-                  </p>
+                  {place.description && (
+                    <p className="text-xs text-neutral-400 line-clamp-2">
+                      {place.description}
+                    </p>
+                  )}
 
-                  {/* Metadata Details */}
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-slate-850 pt-3 text-[10px] text-slate-400 select-text">
-                    <div className="flex items-center gap-1.5 min-w-0 col-span-2">
-                      <MapPin className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                      <span className="truncate">{place.area ? `${place.area}, ` : ""}{place.city}, {place.state}</span>
+                  <div className="border-t border-white/10 pt-2 text-[11px] text-neutral-400 flex flex-col gap-1 mt-auto">
+                    <div>
+                      {place.area ? `${place.area}, ` : ""}{place.city}, {place.state}
                     </div>
-                    {place.bestTimings && (
-                      <div className="flex items-center gap-1.5 min-w-0 col-span-2">
-                        <Clock className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                        <span className="truncate">Best Timings: {place.bestTimings}</span>
-                      </div>
-                    )}
-                    {place.openingHours && (
-                      <div className="flex items-center gap-1.5 min-w-0 col-span-2">
-                        <Compass className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                        <span className="truncate">Opening Hours: {formatOpeningHoursSummary(place.openingHours)}</span>
-                      </div>
-                    )}
-                    {place.bestSeason && (
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <Sun className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                        <span className="truncate">Season: {place.bestSeason}</span>
-                      </div>
-                    )}
-                    {place.transportType && (
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <Bus className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                        <span className="truncate">Transit: {place.transportType}</span>
-                      </div>
-                    )}
                     {place.entryFee && (
-                      <div className="flex items-center gap-1.5 min-w-0 col-span-2">
-                        <Coins className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                        <span className="truncate">Fee: {place.entryFee}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <Users className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                      <span className="truncate">Crowd: {place.crowdLevel || "N/A"}</span>
-                    </div>
-                    {place.closedOn && (
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <Calendar className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                        <span className="truncate">Closed: {place.closedOn}</span>
+                      <div className="text-neutral-500">
+                        Fee: {place.entryFee}
                       </div>
                     )}
                   </div>
-
-                  {/* Engagement & Stats Bar */}
-                  <div className="flex items-center gap-4 text-[10px] text-slate-400 bg-slate-950/40 p-2 rounded-lg border border-slate-850">
-                    <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-rose-400" /> {place.likes || "0"}</span>
-                    <span className="flex items-center gap-1"><Bookmark className="w-3 h-3 text-amber-400" /> {place.saves || "0"}</span>
-                    <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-sky-400" /> {place.visited || "0"}</span>
-                  </div>
-
-                  {/* Submitted / Uploader Footer */}
-                  <div className="border-t border-slate-850 pt-2.5 mt-auto flex items-center justify-between text-[9px] text-slate-500 select-text">
-                    <div className="flex items-center gap-1.5 select-none">
-                      <User className="w-3 h-3 text-slate-600" />
-                      <span>by </span>
-                      <span className="font-bold text-slate-300">{place.uploaderId || "Admin"}</span>
-                      {place.uploaderBadge && (
-                        <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          {place.uploaderBadge}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-slate-600 font-mono text-[8px]">
-                      ID: {(place.id || "").substring(0, 8)}...
-                    </div>
-                  </div>
-
                 </div>
               ))}
             </div>
 
-            {/* Pagination Controls */}
+            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-slate-900 pt-6 select-none">
-                <span className="text-[10px] text-slate-500">
-                  Page <span className="font-bold text-slate-350">{currentPage}</span> of <span className="font-bold text-slate-350">{totalPages}</span>
-                </span>
-                
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between border-t border-white/10 pt-4 text-xs text-neutral-500">
+                <span>Page {currentPage} of {totalPages}</span>
+                <div className="flex items-center gap-1.5">
                   <button
                     disabled={currentPage === 1}
                     onClick={() => { setCurrentPage((p) => Math.max(p - 1, 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                    className="p-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 disabled:opacity-40 disabled:pointer-events-none rounded-lg text-slate-400 hover:text-slate-200 transition"
+                    className="p-1 border border-white/10 rounded text-neutral-400 hover:text-white disabled:opacity-30 transition"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  {Array.from({ length: totalPages }).map((_, i) => {
-                    const pageNum = i + 1;
-                    const isSelected = pageNum === currentPage;
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => { setCurrentPage(pageNum); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                        className={`w-7 h-7 text-xs font-bold rounded-lg border transition ${
-                          isSelected
-                            ? "bg-violet-600 border-violet-500 text-white"
-                            : "bg-slate-900 hover:bg-slate-850 border-slate-800 text-slate-400 hover:text-slate-200"
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
                   <button
                     disabled={currentPage === totalPages}
                     onClick={() => { setCurrentPage((p) => Math.min(p + 1, totalPages)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                    className="p-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 disabled:opacity-40 disabled:pointer-events-none rounded-lg text-slate-400 hover:text-slate-200 transition"
+                    className="p-1 border border-white/10 rounded text-neutral-400 hover:text-white disabled:opacity-30 transition"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -826,35 +624,31 @@ export default function PlacesManagement() {
             )}
           </div>
         )}
-
       </div>
 
       {/* Edit Place Modal */}
       {selectedPlace && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 overflow-y-auto p-4 md:p-10 flex justify-center items-start animate-fadeIn select-text">
-          <div className="w-full max-w-5xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl relative animate-slideDown overflow-hidden my-4 md:my-0">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 overflow-y-auto p-4 flex justify-center items-start animate-fadeIn">
+          <div className="w-full max-w-4xl bg-[#0e0e0e] border border-white/15 rounded-xl shadow-2xl relative my-6 overflow-hidden">
             <button
               onClick={() => setSelectedPlace(null)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-200 bg-slate-950/40 hover:bg-slate-950/80 border border-slate-800 rounded-lg transition z-50"
-              title="Close form"
+              className="absolute top-4 right-4 p-1.5 text-neutral-400 hover:text-white rounded transition z-50"
+              title="Close"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="p-6 border-b border-slate-800 bg-slate-950/50">
-              <h2 className="text-lg font-bold text-slate-100">
-                Editing Place: <span className="text-violet-400">{selectedPlace.placeName}</span>
+            <div className="px-6 py-4 border-b border-white/10">
+              <h2 className="text-sm font-semibold text-white">
+                Edit Place: {selectedPlace.placeName}
               </h2>
-              <p className="text-xs text-slate-400">
-                Update record values conforming strictly to the DoldFind place schema.
-              </p>
             </div>
 
             <div className="p-6 max-h-[80vh] overflow-y-auto scrollbar-thin">
               <PlaceForm
                 initialPlace={selectedPlace}
                 onSuccess={(updatedPlace) => {
-                  showToast("Place details updated successfully!", "success");
+                  showToast("Place updated", "success");
                   setPlaces((prev) => prev.map((p) => (p.id === updatedPlace.id ? updatedPlace : p)));
                   setSelectedPlace(null);
                 }}
@@ -867,50 +661,34 @@ export default function PlacesManagement() {
 
       {/* Delete Confirmation Modal */}
       {deletingPlace && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col gap-4 animate-slideDown">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-950/60 border border-red-800 flex items-center justify-center flex-shrink-0">
-                <Trash2 className="w-5 h-5 text-red-400" />
-              </div>
-              <div className="flex flex-col">
-                <h3 className="text-sm font-bold text-slate-100">Delete Place</h3>
-                <span className="text-xs text-slate-400">This action cannot be undone.</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/50 p-3 rounded-lg border border-slate-850">
-              Are you sure you want to permanently delete <strong className="text-red-400">{deletingPlace.placeName}</strong> from the database registry?
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-sm bg-[#0e0e0e] border border-white/15 rounded-xl p-5 shadow-2xl flex flex-col gap-4">
+            <h3 className="text-sm font-semibold text-white">Delete Place</h3>
+            <p className="text-xs text-neutral-400">
+              Delete <strong className="text-white">{deletingPlace.placeName}</strong>?
             </p>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 onClick={() => setDeletingPlace(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-950/60 border border-slate-800 rounded-lg transition"
+                className="px-3 py-1.5 text-xs text-neutral-400 hover:text-white border border-white/10 rounded-lg transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-500 rounded-lg shadow-lg transition"
+                className="px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-500 rounded-lg transition"
               >
-                Delete Permanently
+                Delete
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/40 py-6 mt-12 relative z-10 select-none">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-550">
-          <p>&copy; {new Date().getFullYear()} DoldFind. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <a href="#" className="hover:text-slate-350 transition-colors">Documentation</a>
-            <a href="#" className="hover:text-slate-350 transition-colors">Guidelines</a>
-            <a href="#" className="hover:text-slate-350 transition-colors">Terms of Service</a>
-          </div>
-        </div>
+      {/* Minimal Footer */}
+      <footer className="border-t border-white/10 py-5 mt-12 text-center text-xs text-neutral-600">
+        &copy; {new Date().getFullYear()} DoldFind
       </footer>
     </main>
   );

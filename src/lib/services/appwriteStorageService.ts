@@ -42,8 +42,7 @@ export class AppwriteStorageService {
    */
   public async uploadImage(
     buffer: Buffer,
-    fileName: string,
-    mimeType: string
+    fileName: string
   ): Promise<{ url: string; fileId: string }> {
     const cleanFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
 
@@ -66,9 +65,10 @@ export class AppwriteStorageService {
           url: viewUrl,
           fileId: uploadedFile.$id,
         };
-      } catch (error: any) {
-        Logger.error("Appwrite Storage upload failed:", error?.message || error);
-        throw new Error(`Appwrite Cloud Storage upload error: ${error?.message || "Failed to upload file"}`);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Failed to upload file";
+        Logger.error("Appwrite Storage upload failed:", message);
+        throw new Error(`Appwrite Cloud Storage upload error: ${message}`);
       }
     }
 

@@ -13,7 +13,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={id}
-            className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none"
+            className="text-[11px] font-medium tracking-wide text-neutral-400 select-none"
           >
             {label}
           </label>
@@ -23,18 +23,18 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             ref={ref}
             id={id}
             rows={rows}
-            className={`w-full bg-slate-900/60 border ${
-              error ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/20" : "border-slate-800 focus:border-violet-500 focus:ring-violet-500/20"
-            } rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 transition-all duration-200 outline-none focus:ring-4 resize-y`}
+            className={`w-full bg-[#141414] border ${
+              error ? "border-red-500/60 focus:border-red-400" : "border-white/10 focus:border-white/60 focus:ring-1 focus:ring-white/20"
+            } rounded-lg px-3.5 py-2.5 text-xs text-white placeholder:text-neutral-600 transition-colors outline-none resize-y ${className}`}
             {...props}
           />
         </div>
         {error ? (
-          <span className="text-xs font-medium text-red-400 select-none animate-fadeIn">
+          <span className="text-[11px] font-medium text-red-400 select-none animate-fadeIn">
             {error}
           </span>
         ) : helperText ? (
-          <span className="text-xs text-slate-500 select-none">{helperText}</span>
+          <span className="text-[10px] text-neutral-500 select-none">{helperText}</span>
         ) : null}
       </div>
     );

@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     let license = "Unknown";
     let licenseUrl = "";
     let title = "";
-    let source = isWikimedia ? "Wikimedia Commons" : "Flickr";
+    const source = isWikimedia ? "Wikimedia Commons" : "Flickr";
     let sourceUrl = targetUrl;
 
     if (isWikimedia) {
