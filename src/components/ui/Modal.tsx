@@ -61,17 +61,17 @@ export const Modal: React.FC<ModalProps> = ({
         const rest = line.substring(keyMatch[0].length);
         
         return (
-          <div key={idx} className="font-mono text-xs md:text-sm leading-relaxed">
-            <span className="text-slate-500">{indent}</span>
-            <span className="text-violet-400">&quot;{key}&quot;</span>
-            <span className="text-slate-300">:</span>
+          <div key={idx} className="font-mono text-xs leading-relaxed">
+            <span className="text-neutral-600">{indent}</span>
+            <span className="text-white font-medium">&quot;{key}&quot;</span>
+            <span className="text-neutral-400">:</span>
             {renderJsonValue(rest)}
           </div>
         );
       }
       
       return (
-        <div key={idx} className="font-mono text-xs md:text-sm leading-relaxed text-slate-300">
+        <div key={idx} className="font-mono text-xs leading-relaxed text-neutral-300">
           {line}
         </div>
       );
@@ -81,20 +81,15 @@ export const Modal: React.FC<ModalProps> = ({
   const renderJsonValue = (valueStr: string) => {
     const trimmed = valueStr.trim();
     if (trimmed.startsWith('"')) {
-      // String value
-      return <span className="text-emerald-400"> {trimmed}</span>;
+      return <span className="text-white/80"> {trimmed}</span>;
     } else if (trimmed === "true" || trimmed === "false") {
-      // Boolean
-      return <span className="text-amber-500"> {trimmed}</span>;
+      return <span className="text-white font-medium"> {trimmed}</span>;
     } else if (!isNaN(Number(trimmed.replace(/,$/, "")))) {
-      // Number
-      return <span className="text-sky-400"> {trimmed}</span>;
+      return <span className="text-white/90"> {trimmed}</span>;
     } else if (trimmed === "null") {
-      // Null
-      return <span className="text-slate-400"> {trimmed}</span>;
+      return <span className="text-neutral-500"> {trimmed}</span>;
     }
-    // Array/Object opening, or comma/bracket
-    return <span className="text-slate-300"> {valueStr}</span>;
+    return <span className="text-neutral-400"> {valueStr}</span>;
   };
 
   return (
@@ -102,61 +97,60 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity duration-300 animate-fadeIn"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-200 animate-fadeIn"
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-3xl bg-slate-900/90 border border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden animate-zoomIn z-10 backdrop-blur-xl">
+      <div className="relative w-full max-w-2xl bg-[#0e0e0e] border border-white/15 rounded-xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden animate-zoomIn z-10">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80">
-          <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10">
+          <h2 className="text-sm font-semibold text-white">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800/50 transition-colors"
+            className="text-neutral-400 hover:text-white p-1 rounded-md transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content (Scrollable JSON view) */}
-        <div className="flex-1 overflow-auto p-6 bg-slate-950/40 relative">
+        <div className="flex-1 overflow-auto p-5 bg-[#0e0e0e] relative">
           <div className="absolute top-4 right-4 flex gap-2">
             <Button
               variant="secondary"
               size="sm"
               onClick={handleCopy}
-              className="flex items-center gap-1.5 backdrop-blur-md bg-slate-800/80 border-slate-700/60 hover:bg-slate-700/80"
+              className="flex items-center gap-1.5"
             >
               {copied ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-400">Copied!</span>
+                  <Check className="w-3.5 h-3.5 text-white" />
+                  <span>Copied</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5 text-slate-300" />
-                  <span>Copy JSON</span>
+                  <Copy className="w-3.5 h-3.5 text-neutral-400" />
+                  <span>Copy</span>
                 </>
               )}
             </Button>
           </div>
 
-          <pre className="overflow-x-auto select-text pt-6 pb-2 pr-12 scrollbar-thin">
+          <pre className="overflow-x-auto select-text pt-4 pb-2 pr-12 scrollbar-thin text-xs">
             <code>{renderHighlightedJson(jsonString)}</code>
           </pre>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-800/80 flex justify-end gap-3 bg-slate-900/40">
-          <Button variant="secondary" onClick={onClose}>
+        <div className="px-5 py-3 border-t border-white/10 flex justify-end gap-2 bg-[#0e0e0e]">
+          <Button variant="secondary" size="sm" onClick={onClose}>
             Close
           </Button>
-          <Button variant="primary" onClick={handleCopy} className="flex items-center gap-2">
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            Copy &amp; Continue
+          <Button variant="primary" size="sm" onClick={handleCopy} className="flex items-center gap-1.5">
+            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            Copy &amp; Close
           </Button>
         </div>
       </div>

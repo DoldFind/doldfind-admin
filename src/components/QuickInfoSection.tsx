@@ -3,18 +3,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Control, UseFormRegister, FieldErrors, Controller } from "react-hook-form";
 import {
-  Clock,
-  Calendar,
-  Users2,
-  Layers,
   AlertCircle,
   Check,
   Search,
   ChevronDown,
-  MapPin,
-  Building2,
-  Landmark,
-  Compass,
   Plus,
 } from "lucide-react";
 
@@ -29,7 +21,6 @@ interface QuickInfoSectionProps {
   errors: FieldErrors<PlaceFormValues>;
 }
 
-// Preset Main Categories
 const CATEGORY_PRESETS = [
   "Temple",
   "Waterfall",
@@ -52,7 +43,6 @@ const CATEGORY_PRESETS = [
 
 const PLACE_TYPES: PlaceType[] = ["Spot", "Cafe", "Market"];
 
-// Time slots definitions
 const TIME_SLOTS = [
   "12 AM - 1 AM",
   "1 AM - 2 AM",
@@ -80,7 +70,6 @@ const TIME_SLOTS = [
   "11 PM - 12 AM",
 ];
 
-// Closed Days
 const WEEK_DAYS = [
   "Monday",
   "Tuesday",
@@ -91,7 +80,6 @@ const WEEK_DAYS = [
   "Sunday",
 ];
 
-// Crowd Levels
 const CROWD_LEVELS = ["Low", "Medium", "High"];
 
 const MONTHS = [
@@ -121,12 +109,10 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
   register,
   errors,
 }) => {
-  // Category Select states
   const [catSearch, setCatSearch] = useState("");
   const [isCatDropdownOpen, setIsCatDropdownOpen] = useState(false);
   const catDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close category dropdown on click outside
   useEffect(() => {
     const clickOutside = (e: MouseEvent) => {
       if (
@@ -145,35 +131,28 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
   );
 
   return (
-    <div className="w-full bg-slate-900/40 border border-slate-800 rounded-xl p-5 md:p-6 backdrop-blur-md flex flex-col gap-6">
+    <div className="w-full bg-[#121212] border border-white/10 rounded-xl p-5 md:p-6 flex flex-col gap-6">
       {/* Section Title */}
-      <div className="flex flex-col gap-1 border-b border-slate-850 pb-3">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-350 flex items-center gap-2">
-          <Layers className="w-4 h-4 text-violet-500" />
-          Standard Information Cards & Attributes
+      <div className="border-b border-white/10 pb-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+          Details
         </h3>
-        <p className="text-xs text-slate-500">
-          Provide standardized place details. All required parameters adhere strictly to the DoldFind place schema.
-        </p>
       </div>
 
-      {/* Grid Layout */}
       <div className="flex flex-col gap-6">
-        
-        {/* Place Type & Main Category Grid */}
+        {/* Place Type & Main Category */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Place Type Selector */}
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none flex items-center gap-1.5">
-              <Compass className="w-3.5 h-3.5 text-violet-400" />
-              Place Type (Required)
+            <label className="text-xs font-medium text-neutral-400 select-none">
+              Place Type
             </label>
             <Controller
               control={control}
               name="placeType"
               render={({ field }) => (
-                <div className="flex flex-col gap-2">
-                  <div className="flex border border-slate-800 rounded-lg p-0.5 bg-slate-950/40">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex border border-white/10 rounded-lg p-0.5 bg-[#141414]">
                     {PLACE_TYPES.map((type) => {
                       const isSelected = field.value === type;
                       return (
@@ -181,10 +160,10 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                           key={type}
                           type="button"
                           onClick={() => field.onChange(type)}
-                          className={`flex-1 text-center py-2.5 px-3 text-xs font-bold rounded-md transition-all duration-200 ${
+                          className={`flex-1 text-center py-2 px-3 text-xs font-medium rounded-md transition-colors ${
                             isSelected
-                              ? "bg-violet-600 text-white shadow-[0_0_12px_rgba(124,58,237,0.3)]"
-                              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"
+                              ? "bg-white text-black font-semibold"
+                              : "text-neutral-400 hover:text-white hover:bg-white/5"
                           }`}
                         >
                           {type}
@@ -193,7 +172,7 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                     })}
                   </div>
                   {errors.placeType && (
-                    <span className="text-xs font-medium text-red-400 animate-fadeIn">
+                    <span className="text-xs text-red-400">
                       {errors.placeType.message}
                     </span>
                   )}
@@ -203,8 +182,8 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
           </div>
 
           {/* Main Category Dropdown */}
-          <div ref={catDropdownRef} className="relative flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none flex items-center gap-1.5">
+          <div ref={catDropdownRef} className="relative flex flex-col gap-2">
+            <label className="text-xs font-medium text-neutral-400 select-none">
               Main Category
             </label>
             <Controller
@@ -215,32 +194,31 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsCatDropdownOpen(!isCatDropdownOpen)}
-                    className={`w-full bg-slate-900/60 border ${
+                    className={`w-full bg-[#141414] border ${
                       errors.mainCategory
-                        ? "border-red-500/80 focus:ring-red-500/20"
-                        : "border-slate-800 focus:border-violet-500 focus:ring-violet-500/20"
-                    } rounded-lg px-4 py-2.5 text-sm text-slate-100 flex items-center justify-between transition-all duration-200 outline-none focus:ring-4 text-left`}
+                        ? "border-red-500/80"
+                        : "border-white/10 focus:border-white/40"
+                    } rounded-lg px-3.5 py-2.5 text-xs text-white flex items-center justify-between transition-colors outline-none text-left`}
                   >
-                    <span className={field.value ? "text-slate-100" : "text-slate-500"}>
-                      {field.value || "Select a main category..."}
+                    <span className={field.value ? "text-white" : "text-neutral-500"}>
+                      {field.value || "Select category..."}
                     </span>
-                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isCatDropdownOpen ? "transform rotate-180" : ""}`} />
+                    <ChevronDown className={`w-4 h-4 text-neutral-500 transition-transform ${isCatDropdownOpen ? "rotate-180" : ""}`} />
                   </button>
 
                   {isCatDropdownOpen && (
-                    <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-lg shadow-2xl z-50 max-h-56 overflow-y-auto p-1.5 animate-slideDown scrollbar-thin">
-                      <div className="flex items-center gap-1.5 bg-slate-950/60 border border-slate-800 px-2.5 py-1.5 rounded-md mb-1.5">
-                        <Search className="w-4 h-4 text-slate-500" />
+                    <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-[#141414] border border-white/15 rounded-lg shadow-xl z-50 max-h-56 overflow-y-auto p-1.5">
+                      <div className="flex items-center gap-1.5 bg-[#0e0e0e] border border-white/10 px-2.5 py-1.5 rounded-md mb-1.5">
+                        <Search className="w-3.5 h-3.5 text-neutral-500" />
                         <input
                           type="text"
-                          placeholder="Search categories..."
+                          placeholder="Search..."
                           value={catSearch}
                           onChange={(e) => setCatSearch(e.target.value)}
-                          className="bg-transparent border-none outline-none text-xs text-slate-200 w-full focus:ring-0 p-0"
+                          className="bg-transparent border-none outline-none text-xs text-white w-full focus:ring-0 p-0"
                         />
                       </div>
 
-                      {/* Show Add Custom option if search query is entered and not matching presets */}
                       {catSearch.trim() && !CATEGORY_PRESETS.some(opt => opt.toLowerCase() === catSearch.trim().toLowerCase()) && (
                         <button
                           key="custom-main-category"
@@ -250,10 +228,10 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                             setIsCatDropdownOpen(false);
                             setCatSearch("");
                           }}
-                          className="w-full flex items-center gap-1.5 text-left px-3 py-2.5 text-xs text-emerald-400 hover:bg-slate-800/80 rounded-md font-semibold transition-colors group mb-1.5 border border-dashed border-emerald-900/50"
+                          className="w-full flex items-center gap-1.5 text-left px-2.5 py-2 text-xs text-white hover:bg-white/10 rounded-md transition-colors mb-1 border border-dashed border-white/20"
                         >
-                          <Plus className="w-3.5 h-3.5 group-hover:scale-110 transition-transform text-emerald-400" />
-                          Add custom: &quot;{catSearch.trim()}&quot;
+                          <Plus className="w-3.5 h-3.5 text-white" />
+                          Add &quot;{catSearch.trim()}&quot;
                         </button>
                       )}
 
@@ -267,17 +245,17 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                               setIsCatDropdownOpen(false);
                               setCatSearch("");
                             }}
-                            className="w-full flex items-center justify-between text-left px-3 py-2 text-xs text-slate-350 hover:text-white hover:bg-slate-800/60 rounded-md transition-all group"
+                            className="w-full flex items-center justify-between text-left px-2.5 py-1.5 text-xs text-neutral-300 hover:text-white hover:bg-white/10 rounded-md transition-colors"
                           >
                             <span>{cat}</span>
                             {field.value === cat && (
-                              <Check className="w-3.5 h-3.5 text-violet-500" />
+                              <Check className="w-3.5 h-3.5 text-white" />
                             )}
                           </button>
                         ))
                       ) : !catSearch.trim() ? (
-                        <div className="px-3 py-4 text-center text-xs text-slate-500 select-none">
-                          No presets found.
+                        <div className="px-3 py-3 text-center text-xs text-neutral-500">
+                          No categories
                         </div>
                       ) : null}
                     </div>
@@ -286,39 +264,38 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
               )}
             />
             {errors.mainCategory && (
-              <span className="text-xs font-medium text-red-400 animate-fadeIn">
+              <span className="text-xs text-red-400">
                 {errors.mainCategory.message}
               </span>
             )}
           </div>
         </div>
 
-        {/* Location Breakdown: City, Area, State */}
+        {/* Location: City, Area, State */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input
             label="City"
-            placeholder="e.g. Bhubaneswar, Los Angeles"
+            placeholder="e.g. Bhubaneswar"
             error={errors.city?.message}
             {...register("city")}
           />
           <Input
             label="Area"
-            placeholder="e.g. Saheed Nagar, Downtown"
+            placeholder="e.g. Saheed Nagar"
             error={errors.area?.message}
             {...register("area")}
           />
           <Input
             label="State"
-            placeholder="e.g. Odisha, California"
+            placeholder="e.g. Odisha"
             error={errors.state?.message}
             {...register("state")}
           />
         </div>
 
-        {/* Best Timings Selector (Chips Grid) */}
+        {/* Best Timings */}
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-violet-400" />
+          <label className="text-xs font-medium text-neutral-400 select-none">
             Best Timings
           </label>
           <Controller
@@ -342,9 +319,8 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
               const hasOver4Hours = continuousBlocks.some((b) => b > 4);
 
               return (
-                <div className="flex flex-col gap-3">
-                  {/* Grid of 24 Hour Slots */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                <div className="flex flex-col gap-2.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-1.5">
                     {TIME_SLOTS.map((slot, idx) => {
                       const isSelected = selected.includes(idx);
                       return (
@@ -352,10 +328,10 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                           key={slot}
                           type="button"
                           onClick={() => handleToggleSlot(idx)}
-                          className={`text-center py-2 px-1 text-[11px] font-semibold rounded-lg border transition-all duration-200 ${
+                          className={`text-center py-2 px-1 text-[11px] font-medium rounded-lg border transition-colors ${
                             isSelected
-                              ? "bg-violet-950/50 border-violet-750 text-violet-300 shadow-[0_0_10px_rgba(124,58,237,0.15)]"
-                              : "bg-slate-900/40 border-slate-800/80 text-slate-400 hover:border-slate-700/60 hover:text-slate-200"
+                              ? "bg-white text-black font-semibold border-white"
+                              : "bg-[#141414] border-white/10 text-neutral-400 hover:text-white hover:border-white/20"
                           }`}
                         >
                           {slot}
@@ -364,30 +340,22 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                     })}
                   </div>
 
-                  {/* Helper / Merged preview */}
                   {selected.length > 0 && (
-                    <div className="bg-slate-950/40 border border-slate-850 rounded-lg p-3 flex flex-col gap-1.5 animate-fadeIn">
-                      <div className="text-xs text-slate-400 leading-relaxed">
-                        <span className="font-bold text-slate-300">Selected Slots:</span> {selected.length} hour{selected.length > 1 ? "s" : ""} selected.
-                      </div>
-                      <div className="text-xs text-violet-400 leading-relaxed font-semibold">
-                        <span className="text-slate-400 font-normal">Stored format:</span> &quot;{merged}&quot;
-                      </div>
-
-                      {/* Over 4 Hours Warning */}
+                    <div className="bg-[#141414] border border-white/10 rounded-lg p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span className="text-neutral-400">
+                        {selected.length} hour{selected.length > 1 ? "s" : ""} selected &bull; <span className="text-white font-medium">{merged}</span>
+                      </span>
                       {hasOver4Hours && (
-                        <div className="flex items-center gap-1.5 text-amber-500 mt-1 animate-fadeIn">
-                          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                          <span className="text-[10px] font-semibold uppercase tracking-wider">
-                            Recommended maximum continuous best timing is 4 hours.
-                          </span>
-                        </div>
+                        <span className="text-neutral-400 text-[11px] flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5 text-neutral-300" />
+                          Max continuous recommended is 4h
+                        </span>
                       )}
                     </div>
                   )}
 
                   {errors.bestTimings && (
-                    <span className="text-xs font-medium text-red-400 animate-fadeIn">
+                    <span className="text-xs text-red-400">
                       {errors.bestTimings.message}
                     </span>
                   )}
@@ -397,10 +365,9 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
           />
         </div>
 
-        {/* Closed On Selector */}
+        {/* Closed On */}
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-violet-400" />
+          <label className="text-xs font-medium text-neutral-400 select-none">
             Closed On
           </label>
           <Controller
@@ -426,7 +393,7 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
               };
 
               return (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
                   <div className="flex flex-wrap gap-2">
                     {WEEK_DAYS.map((day) => {
                       const isSelected = selected.includes(day) && !isNeverClosed;
@@ -435,10 +402,10 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                           key={day}
                           type="button"
                           onClick={() => handleToggleDay(day)}
-                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-200 ${
+                          className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                             isSelected
-                              ? "bg-violet-950/50 border-violet-750 text-violet-300 shadow-[0_0_10px_rgba(124,58,237,0.15)]"
-                              : "bg-slate-900/40 border-slate-800/80 text-slate-400 hover:border-slate-700/60 hover:text-slate-200"
+                              ? "bg-white text-black font-semibold border-white"
+                              : "bg-[#141414] border-white/10 text-neutral-400 hover:text-white hover:border-white/20"
                           }`}
                         >
                           {day}
@@ -449,10 +416,10 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                     <button
                       type="button"
                       onClick={() => handleToggleDay("Never Closed")}
-                      className={`px-4 py-1.5 text-xs font-bold rounded-lg border transition-all duration-200 ${
+                      className={`px-3.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                         isNeverClosed
-                          ? "bg-emerald-950/50 border-emerald-800 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
-                          : "bg-slate-900/40 border-slate-800/80 text-slate-400 hover:border-slate-700/60 hover:text-slate-200"
+                          ? "bg-white text-black font-semibold border-white"
+                          : "bg-[#141414] border-white/10 text-neutral-400 hover:text-white hover:border-white/20"
                       }`}
                     >
                       Never Closed
@@ -460,7 +427,7 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                   </div>
 
                   {errors.closedDays && (
-                    <span className="text-xs font-medium text-red-400 animate-fadeIn">
+                    <span className="text-xs text-red-400">
                       {errors.closedDays.message}
                     </span>
                   )}
@@ -472,23 +439,22 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
 
         {/* Best Season */}
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-violet-400" />
-            Best Season (Required)
+          <label className="text-xs font-medium text-neutral-400 select-none">
+            Best Season
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">From Month</label>
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] text-neutral-500">From Month</span>
               <Controller
                 control={control}
                 name="bestSeason.startMonth"
                 render={({ field }) => (
                   <select
                     {...field}
-                    className="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-slate-100 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/20 transition-all duration-200"
+                    className="w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white outline-none focus:border-white/40 transition-colors"
                   >
                     {MONTHS.map((m) => (
-                      <option key={m} value={m} className="bg-slate-950 text-slate-100">
+                      <option key={m} value={m} className="bg-[#141414] text-white">
                         {m}
                       </option>
                     ))}
@@ -496,18 +462,18 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                 )}
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">To Month</label>
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] text-neutral-500">To Month</span>
               <Controller
                 control={control}
                 name="bestSeason.endMonth"
                 render={({ field }) => (
                   <select
                     {...field}
-                    className="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-slate-100 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/20 transition-all duration-200"
+                    className="w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white outline-none focus:border-white/40 transition-colors"
                   >
                     {MONTHS.map((m) => (
-                      <option key={m} value={m} className="bg-slate-950 text-slate-100">
+                      <option key={m} value={m} className="bg-[#141414] text-white">
                         {m}
                       </option>
                     ))}
@@ -517,17 +483,16 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
             </div>
           </div>
           {errors.bestSeason && (
-            <span className="text-xs font-medium text-red-400 animate-fadeIn">
+            <span className="text-xs text-red-400">
               {errors.bestSeason.message}
             </span>
           )}
         </div>
 
         {/* Opening Hours */}
-        <div className="flex flex-col gap-3 border-t border-slate-850 pt-4 mt-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-violet-400" />
-            Opening Hours (Required)
+        <div className="flex flex-col gap-3 border-t border-white/10 pt-4">
+          <label className="text-xs font-medium text-neutral-400 select-none">
+            Opening Hours
           </label>
           
           <Controller
@@ -536,20 +501,20 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
             render={({ field }) => {
               const mode = field.value;
               return (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
                   {/* Mode Tabs */}
-                  <div className="flex border border-slate-800 rounded-lg p-0.5 bg-slate-950/40 w-full sm:w-fit">
+                  <div className="flex border border-white/10 rounded-lg p-0.5 bg-[#141414] w-full sm:w-fit">
                     {(["24h", "same", "custom"] as const).map((m) => {
-                      const label = m === "24h" ? "Open 24 Hours" : m === "same" ? "Same Time Everyday" : "Custom Daily Hours";
+                      const label = m === "24h" ? "24 Hours" : m === "same" ? "Same Everyday" : "Custom Hours";
                       return (
                         <button
                           key={m}
                           type="button"
                           onClick={() => field.onChange(m)}
-                          className={`flex-1 sm:flex-initial text-center py-2 px-4 text-xs font-semibold rounded-md transition-all duration-200 ${
+                          className={`flex-1 sm:flex-initial text-center py-2 px-3.5 text-xs font-medium rounded-md transition-colors ${
                             mode === m
-                              ? "bg-violet-600 text-white shadow-[0_0_12px_rgba(124,58,237,0.3)] font-bold"
-                              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"
+                              ? "bg-white text-black font-semibold"
+                              : "text-neutral-400 hover:text-white hover:bg-white/5"
                           }`}
                         >
                           {label}
@@ -558,46 +523,45 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                     })}
                   </div>
 
-                  {/* Mode-Specific Settings */}
                   {mode === "24h" && (
-                    <div className="bg-slate-950/30 border border-slate-850 rounded-lg p-4 animate-fadeIn">
-                      <p className="text-xs text-emerald-400/85 font-semibold">
-                        ✓ Place is configured as open 24 hours a day, 7 days a week.
+                    <div className="bg-[#141414] border border-white/10 rounded-lg p-3">
+                      <p className="text-xs text-neutral-300">
+                        Open 24 hours every day
                       </p>
                     </div>
                   )}
 
                   {mode === "same" && (
-                    <div className="bg-slate-950/30 border border-slate-850 rounded-lg p-4 flex flex-col sm:flex-row gap-4 animate-fadeIn">
-                      <div className="flex-1 flex flex-col gap-1.5">
-                        <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Start Time</label>
+                    <div className="bg-[#141414] border border-white/10 rounded-lg p-3 flex flex-col sm:flex-row gap-3">
+                      <div className="flex-1 flex flex-col gap-1">
+                        <span className="text-[11px] text-neutral-500">Start Time</span>
                         <Controller
                           control={control}
                           name="openingHours.sameTime.start"
                           render={({ field: startField }) => (
                             <select
                               {...startField}
-                              className="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 outline-none focus:border-violet-500 transition"
+                              className="w-full bg-[#0e0e0e] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-white/40 transition-colors"
                             >
                               {HOURS_OF_DAY.map((h) => (
-                                <option key={h} value={h} className="bg-slate-950 text-slate-100">{h}</option>
+                                <option key={h} value={h} className="bg-[#0e0e0e] text-white">{h}</option>
                               ))}
                             </select>
                           )}
                         />
                       </div>
-                      <div className="flex-1 flex flex-col gap-1.5">
-                        <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">End Time</label>
+                      <div className="flex-1 flex flex-col gap-1">
+                        <span className="text-[11px] text-neutral-500">End Time</span>
                         <Controller
                           control={control}
                           name="openingHours.sameTime.end"
                           render={({ field: endField }) => (
                             <select
                               {...endField}
-                              className="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 outline-none focus:border-violet-500 transition"
+                              className="w-full bg-[#0e0e0e] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-white/40 transition-colors"
                             >
                               {HOURS_OF_DAY.map((h) => (
-                                <option key={h} value={h} className="bg-slate-950 text-slate-100">{h}</option>
+                                <option key={h} value={h} className="bg-[#0e0e0e] text-white">{h}</option>
                               ))}
                             </select>
                           )}
@@ -607,27 +571,27 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                   )}
 
                   {mode === "custom" && (
-                    <div className="bg-slate-950/30 border border-slate-850 rounded-lg p-4 flex flex-col gap-3.5 animate-fadeIn">
+                    <div className="bg-[#141414] border border-white/10 rounded-lg p-3 flex flex-col gap-2.5">
                       {WEEK_DAYS.map((day) => (
-                        <div key={day} className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-900 last:border-b-0 pb-3 last:pb-0 gap-3">
+                        <div key={day} className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/5 last:border-b-0 pb-2 last:pb-0 gap-2">
                           <div className="flex items-center justify-between sm:justify-start gap-4">
-                            <span className="text-xs font-bold text-slate-300 w-24">{day}</span>
+                            <span className="text-xs font-medium text-neutral-300 w-24">{day}</span>
                             
                             {/* Open/Closed Toggle */}
                             <Controller
                               control={control}
                               name={`openingHours.days.${day}.status`}
                               render={({ field: statusField }) => (
-                                <div className="flex border border-slate-800 rounded-lg p-0.5 bg-slate-900/40 w-fit">
+                                <div className="flex border border-white/10 rounded-lg p-0.5 bg-[#0e0e0e] w-fit">
                                   {(["open", "closed"] as const).map((s) => (
                                     <button
                                       key={s}
                                       type="button"
                                       onClick={() => statusField.onChange(s)}
-                                      className={`py-1 px-3 text-[10px] font-bold rounded-md transition-all ${
+                                      className={`py-1 px-2.5 text-[10px] font-medium rounded-md transition-colors ${
                                         statusField.value === s
-                                          ? "bg-emerald-600 text-white shadow-[0_0_8px_rgba(16,185,129,0.2)]"
-                                          : "bg-red-600 text-white shadow-[0_0_8px_rgba(239,68,68,0.2)]"
+                                          ? s === "open" ? "bg-white text-black font-semibold" : "bg-neutral-800 text-neutral-300 font-semibold"
+                                          : "text-neutral-500 hover:text-white"
                                       }`}
                                     >
                                       {s === "open" ? "Open" : "Closed"}
@@ -645,43 +609,38 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                             render={({ field: statusField }) => {
                               const isOpen = statusField.value === "open";
                               return (
-                                <div className={`flex items-center gap-3 transition-opacity duration-200 ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-30 pointer-events-none"}`}>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">Start</span>
-                                    <Controller
-                                      control={control}
-                                      name={`openingHours.days.${day}.start`}
-                                      render={({ field: startField }) => (
-                                        <select
-                                          {...startField}
-                                          disabled={!isOpen}
-                                          className="bg-slate-900/60 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 outline-none focus:border-violet-500 transition w-32"
-                                        >
-                                          {HOURS_OF_DAY.map((h) => (
-                                            <option key={h} value={h} className="bg-slate-950 text-slate-100">{h}</option>
-                                          ))}
-                                        </select>
-                                      )}
-                                    />
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">End</span>
-                                    <Controller
-                                      control={control}
-                                      name={`openingHours.days.${day}.end`}
-                                      render={({ field: endField }) => (
-                                        <select
-                                          {...endField}
-                                          disabled={!isOpen}
-                                          className="bg-slate-900/60 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 outline-none focus:border-violet-500 transition w-32"
-                                        >
-                                          {HOURS_OF_DAY.map((h) => (
-                                            <option key={h} value={h} className="bg-slate-950 text-slate-100">{h}</option>
-                                          ))}
-                                        </select>
-                                      )}
-                                    />
-                                  </div>
+                                <div className={`flex items-center gap-2 transition-opacity ${isOpen ? "opacity-100" : "opacity-20 pointer-events-none"}`}>
+                                  <Controller
+                                    control={control}
+                                    name={`openingHours.days.${day}.start`}
+                                    render={({ field: startField }) => (
+                                      <select
+                                        {...startField}
+                                        disabled={!isOpen}
+                                        className="bg-[#0e0e0e] border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white outline-none focus:border-white/40 transition-colors w-28"
+                                      >
+                                        {HOURS_OF_DAY.map((h) => (
+                                          <option key={h} value={h} className="bg-[#0e0e0e] text-white">{h}</option>
+                                        ))}
+                                      </select>
+                                    )}
+                                  />
+                                  <span className="text-neutral-500 text-xs">-</span>
+                                  <Controller
+                                    control={control}
+                                    name={`openingHours.days.${day}.end`}
+                                    render={({ field: endField }) => (
+                                      <select
+                                        {...endField}
+                                        disabled={!isOpen}
+                                        className="bg-[#0e0e0e] border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white outline-none focus:border-white/40 transition-colors w-28"
+                                      >
+                                        {HOURS_OF_DAY.map((h) => (
+                                          <option key={h} value={h} className="bg-[#0e0e0e] text-white">{h}</option>
+                                        ))}
+                                      </select>
+                                    )}
+                                  />
                                 </div>
                               );
                             }}
@@ -695,33 +654,31 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
             }}
           />
           {errors.openingHours && (
-            <span className="text-xs font-medium text-red-400 animate-fadeIn">
+            <span className="text-xs text-red-400">
               {errors.openingHours.message}
             </span>
           )}
         </div>
 
         {/* Nearest Metro, Transport Type & Crowd Level */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="flex flex-col gap-1.5">
-            <Input
-              label="Nearest Metro"
-              placeholder="e.g. Master Canteen, Central Station"
-              error={errors.nearestMetro?.message}
-              {...register("nearestMetro")}
-            />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Input
+            label="Nearest Metro"
+            placeholder="e.g. Master Canteen"
+            error={errors.nearestMetro?.message}
+            {...register("nearestMetro")}
+          />
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none">
-              Transport Type (Required)
+            <label className="text-xs font-medium text-neutral-400 select-none">
+              Transport Type
             </label>
             <Controller
               control={control}
               name="transportType"
               render={({ field }) => (
-                <div className="flex flex-col gap-2">
-                  <div className="flex border border-slate-800 rounded-lg p-0.5 bg-slate-950/40 w-fit min-w-[160px]">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex border border-white/10 rounded-lg p-0.5 bg-[#141414] w-fit min-w-[140px]">
                     {["Bus", "Metro"].map((opt) => {
                       const isSelected = field.value === opt;
                       return (
@@ -729,10 +686,10 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                           key={opt}
                           type="button"
                           onClick={() => field.onChange(opt)}
-                          className={`flex-1 text-center py-2 px-6 text-xs font-semibold rounded-md transition-all duration-200 ${
+                          className={`flex-1 text-center py-2 px-4 text-xs font-medium rounded-md transition-colors ${
                             isSelected
-                              ? "bg-violet-600 text-white shadow-[0_0_12px_rgba(124,58,237,0.3)] font-bold"
-                              : "text-slate-400 hover:text-slate-200 hover:bg-slate-905/30"
+                              ? "bg-white text-black font-semibold"
+                              : "text-neutral-400 hover:text-white hover:bg-white/5"
                           }`}
                         >
                           {opt}
@@ -741,7 +698,7 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                     })}
                   </div>
                   {errors.transportType && (
-                    <span className="text-xs font-medium text-red-400 animate-fadeIn">
+                    <span className="text-xs text-red-400">
                       {errors.transportType.message}
                     </span>
                   )}
@@ -751,16 +708,15 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none flex items-center gap-1.5">
-              <Users2 className="w-3.5 h-3.5 text-violet-400" />
+            <label className="text-xs font-medium text-neutral-400 select-none">
               Crowd Level
             </label>
             <Controller
               control={control}
               name="crowdLevel"
               render={({ field }) => (
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-wrap border border-slate-800 rounded-lg p-0.5 bg-slate-950/40">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex border border-white/10 rounded-lg p-0.5 bg-[#141414]">
                     {CROWD_LEVELS.map((level) => {
                       const isSelected = field.value === level;
                       return (
@@ -768,10 +724,10 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                           key={level}
                           type="button"
                           onClick={() => field.onChange(level)}
-                          className={`flex-1 text-center py-2 px-1 text-[11px] font-semibold rounded-md transition-all duration-200 whitespace-nowrap ${
+                          className={`flex-1 text-center py-2 px-2 text-xs font-medium rounded-md transition-colors ${
                             isSelected
-                              ? "bg-violet-600 text-white shadow-[0_0_12px_rgba(124,58,237,0.3)] font-bold"
-                              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"
+                              ? "bg-white text-black font-semibold"
+                              : "text-neutral-400 hover:text-white hover:bg-white/5"
                           }`}
                         >
                           {level}
@@ -780,7 +736,7 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
                     })}
                   </div>
                   {errors.crowdLevel && (
-                    <span className="text-xs font-medium text-red-400 animate-fadeIn">
+                    <span className="text-xs text-red-400">
                       {errors.crowdLevel.message}
                     </span>
                   )}
@@ -791,77 +747,61 @@ export const QuickInfoSection: React.FC<QuickInfoSectionProps> = ({
         </div>
 
         {/* Safety Note Textarea */}
-        <div className="flex flex-col gap-1.5">
-          <Textarea
-            label="Safety Note"
-            placeholder="List any hazards, warning notes, or season advisories..."
-            error={errors.safetyNote?.message}
-            {...register("safetyNote")}
-            rows={4}
-          />
-        </div>
+        <Textarea
+          label="Safety Note"
+          placeholder="List any hazards or warnings..."
+          error={errors.safetyNote?.message}
+          {...register("safetyNote")}
+          rows={3}
+        />
 
         {/* Entry Fee & Ticket Required */}
-        <div className="flex flex-col gap-4 border-t border-slate-850 pt-4 mt-2">
-          <div className="flex flex-col gap-0.5">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-350">
-              Entry Fee & Ticketing
-            </h4>
-            <p className="text-[10px] text-slate-500">
-              Specify entry cost details or select ticket options.
-            </p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-white/10 pt-4">
+          <Input
+            label="Entry Fee"
+            placeholder="e.g. ₹50 per person"
+            error={errors.entryFee?.message}
+            {...register("entryFee")}
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="flex flex-col gap-1.5">
-              <Input
-                label="Entry Fee (Optional)"
-                placeholder="e.g. ₹50, ₹100 per person, Free for Students"
-                error={errors.entryFee?.message}
-                {...register("entryFee")}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none">
-                Ticket Required
-              </label>
-              <Controller
-                control={control}
-                name="ticketRequired"
-                render={({ field }) => (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex border border-slate-800 rounded-lg p-0.5 bg-slate-950/40 w-fit min-w-[160px]">
-                      {(["Yes", "No"] as const).map((opt) => {
-                        const isSelected = field.value === opt;
-                        return (
-                          <button
-                            key={opt}
-                            type="button"
-                            onClick={() => field.onChange(opt)}
-                            className={`flex-1 text-center py-2 px-6 text-xs font-semibold rounded-md transition-all duration-200 ${
-                              isSelected
-                                ? "bg-violet-600 text-white shadow-[0_0_12px_rgba(124,58,237,0.3)] font-bold"
-                                : "text-slate-400 hover:text-slate-200 hover:bg-slate-905/30"
-                            }`}
-                          >
-                            {opt}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {errors.ticketRequired && (
-                      <span className="text-xs font-medium text-red-400 animate-fadeIn">
-                        {errors.ticketRequired.message}
-                      </span>
-                    )}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-medium text-neutral-400 select-none">
+              Ticket Required
+            </label>
+            <Controller
+              control={control}
+              name="ticketRequired"
+              render={({ field }) => (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex border border-white/10 rounded-lg p-0.5 bg-[#141414] w-fit min-w-[140px]">
+                    {(["Yes", "No"] as const).map((opt) => {
+                      const isSelected = field.value === opt;
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => field.onChange(opt)}
+                          className={`flex-1 text-center py-2 px-5 text-xs font-medium rounded-md transition-colors ${
+                            isSelected
+                              ? "bg-white text-black font-semibold"
+                              : "text-neutral-400 hover:text-white hover:bg-white/5"
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
-              />
-            </div>
+                  {errors.ticketRequired && (
+                    <span className="text-xs text-red-400">
+                      {errors.ticketRequired.message}
+                    </span>
+                  )}
+                </div>
+              )}
+            />
           </div>
         </div>
-
       </div>
     </div>
   );

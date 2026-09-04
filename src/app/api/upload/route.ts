@@ -77,12 +77,12 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Compress the image (webp output, targets < 500KB)
-    const { buffer: compressedBuffer, mimeType: compressedMimeType, fileName: compressedFileName } =
+    const { buffer: compressedBuffer, fileName: compressedFileName } =
       await compressImage(buffer, file.name, file.type);
 
     // 5. Upload to Appwrite Cloud Storage Bucket
     const storageService = new AppwriteStorageService();
-    const uploadResult = await storageService.uploadImage(compressedBuffer, compressedFileName, compressedMimeType);
+    const uploadResult = await storageService.uploadImage(compressedBuffer, compressedFileName);
 
     AuditLogger.log({
       event: "FILE_UPLOADED",

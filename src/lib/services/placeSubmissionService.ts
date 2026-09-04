@@ -30,6 +30,7 @@ export class PlaceSubmissionService {
     const submittedAt = new Date().toISOString();
 
     const placeDetails: PlaceDetails = {
+      id: placeId,
       placeName: parsed.placeName,
       description: parsed.description,
       placeType: parsed.placeType,

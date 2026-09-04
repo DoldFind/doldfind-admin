@@ -57,10 +57,10 @@ export async function POST(request: NextRequest) {
       return jsonError("BAD_REQUEST", "Payload size limit exceeded.", 400);
     }
 
-    let body: any;
+    let body: unknown;
     try {
       body = JSON.parse(bodyText);
-    } catch (parseErr) {
+    } catch {
       return jsonError("BAD_REQUEST", "Invalid JSON format.", 400);
     }
 

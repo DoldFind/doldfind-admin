@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     });
 
     return jsonSuccess("Logged out successfully.");
-  } catch (error) {
+  } catch {
     return jsonError("INTERNAL_ERROR", "Failed to clear session.", 500);
   }
 }

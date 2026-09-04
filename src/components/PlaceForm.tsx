@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { useForm, Controller, useWatch, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, FileCode, CheckCircle2, AlertTriangle, RefreshCw, Copy, Check, Sparkles } from "lucide-react";
 
 import { placeSchema } from "@/schemas/placeSchema";
 import { PlaceFormValues, PlaceDetails } from "@/types/place";
@@ -42,9 +41,9 @@ export const PlaceForm: React.FC<PlaceFormProps> = ({
     getValues,
     setValue,
     reset,
-    formState: { errors, isValid, isSubmitting },
+    formState: { errors, isSubmitting },
   } = useForm<PlaceFormValues>({
-    resolver: zodResolver(placeSchema) as any,
+    resolver: zodResolver(placeSchema) as unknown as Resolver<PlaceFormValues>,
     mode: "onTouched",
     defaultValues: {
       placeName: "",
@@ -205,8 +204,8 @@ export const PlaceForm: React.FC<PlaceFormProps> = ({
           setApiError(result.error?.message || "An unexpected error occurred during submission.");
         }
       }
-    } catch (err) {
-      setApiError("Failed to connect to the server. Please check your network and try again.");
+    } catch {
+      setApiError("Failed to connect to the server. Please try again.");
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -222,40 +221,23 @@ export const PlaceForm: React.FC<PlaceFormProps> = ({
     <div className="w-full flex flex-col gap-6">
       {/* Error Alert */}
       {apiError && (
-        <div className="bg-red-955/60 border border-red-800/80 rounded-xl p-5 md:p-6 backdrop-blur-md flex gap-3 animate-fadeIn">
-          <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
-          <div className="flex flex-col gap-1">
-            <h4 className="text-sm font-bold text-red-300">
-              Submission Failed
-            </h4>
-            <p className="text-xs text-red-450/80 leading-relaxed">
-              {apiError}
-            </p>
-          </div>
+        <div className="border border-red-500/30 bg-red-950/20 rounded-xl p-4 text-xs text-red-400 animate-fadeIn">
+          {apiError}
         </div>
       )}
 
       {/* Similarity Warning Alert */}
       {similarWarning && (
-        <div className="bg-amber-950/60 border border-amber-800/80 rounded-xl p-5 md:p-6 backdrop-blur-md flex flex-col md:flex-row items-start justify-between gap-4 animate-fadeIn">
-          <div className="flex gap-3">
-            <AlertTriangle className="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5" />
-            <div className="flex flex-col gap-1">
-              <h4 className="text-sm font-bold text-amber-300">
-                Uniqueness Check Review Required
-              </h4>
-              <p className="text-xs text-amber-400/80 max-w-2xl leading-relaxed">
-                {similarWarning}
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2 mt-3 md:mt-0 flex-shrink-0">
+        <div className="border border-white/20 bg-[#161616] rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
+          <p className="text-xs text-neutral-300 leading-relaxed">
+            {similarWarning}
+          </p>
+          <div className="flex gap-2 flex-shrink-0">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setSimilarWarning(null)}
-              className="bg-amber-955/20 border-amber-850 hover:bg-amber-900/40 text-amber-300"
             >
               Cancel
             </Button>
@@ -266,9 +248,9 @@ export const PlaceForm: React.FC<PlaceFormProps> = ({
                 const values = getValues();
                 executeSubmit(values, true);
               }}
-              className="bg-amber-600 hover:bg-amber-700 text-white font-medium flex-shrink-0"
+              variant="primary"
             >
-              Ignore & Submit
+              Proceed
             </Button>
           </div>
         </div>
@@ -276,71 +258,57 @@ export const PlaceForm: React.FC<PlaceFormProps> = ({
 
       {/* Success Alert */}
       {submitSuccess && (
-        <div className="bg-emerald-950/60 border border-emerald-800/80 rounded-xl p-5 md:p-6 backdrop-blur-md flex flex-col md:flex-row items-start justify-between gap-4 animate-fadeIn">
-          <div className="flex gap-3">
-            <CheckCircle2 className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-0.5" />
-            <div className="flex flex-col gap-1">
-              <h4 className="text-sm font-bold text-emerald-300">
-                Place details submitted successfully!
-              </h4>
-              <p className="text-xs text-emerald-400/80 max-w-2xl leading-relaxed">
-                The contribution has been successfully processed, validated, and saved to the DoldFind database queue.
-              </p>
-              <div className="mt-3 flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setPreviewData(submitSuccess);
-                    setIsPreviewOpen(true);
-                  }}
-                  className="bg-emerald-950/20 border-emerald-800 hover:bg-emerald-900/40 text-emerald-300"
-                >
-                  <Eye className="w-3.5 h-3.5 mr-1.5" />
-                  View Final Payload
-                </Button>
-              </div>
-            </div>
+        <div className="border border-white/20 bg-[#161616] rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
+          <p className="text-xs text-white">
+            Place submitted successfully.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setPreviewData(submitSuccess);
+                setIsPreviewOpen(true);
+              }}
+            >
+              View JSON
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleReset}
+            >
+              New Entry
+            </Button>
           </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleReset}
-            className="border-emerald-800/60 hover:bg-emerald-900/30 text-emerald-300 mt-2 md:mt-0 flex-shrink-0 flex items-center gap-1.5"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Create Another
-          </Button>
         </div>
       )}
 
       {/* Main Form Dashboard */}
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 select-text">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Left Column - General Details */}
+          {/* Left Column */}
           <div className="lg:col-span-2 flex flex-col gap-6">
-            <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-5 md:p-6 backdrop-blur-md flex flex-col gap-5">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 border-b border-slate-850 pb-2">
-                Core Information
+            <div className="bg-[#121212]/60 border border-white/10 rounded-xl p-5 flex flex-col gap-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 border-b border-white/10 pb-2">
+                Information
               </h3>
 
-              {/* Place Name */}
               <Input
                 label="Place Name"
-                placeholder="e.g. Secret Hidden Waterfall, Cozy Peak Lookout, Central Cafe"
+                placeholder="e.g. Hidden Waterfall"
                 error={errors.placeName?.message}
                 {...register("placeName")}
               />
 
-              {/* Categories */}
               <Controller
                 control={control}
                 name="categories"
                 render={({ field }) => (
                   <MultiSelect
                     label="Categories"
-                    placeholder="Search or add categories (e.g. Waterfall, Nature, Organic)"
+                    placeholder="Search or add categories"
                     selected={field.value}
                     onChange={field.onChange}
                     error={errors.categories?.message}
@@ -348,16 +316,15 @@ export const PlaceForm: React.FC<PlaceFormProps> = ({
                 )}
               />
 
-              {/* Description */}
               <Textarea
                 label="Description"
-                placeholder="Share instructions, history, atmosphere, or vibe of this place..."
+                placeholder="Details about this place..."
                 error={errors.description?.message}
                 {...register("description")}
               />
             </div>
 
-            {/* Images & Gallery Section */}
+            {/* Images Section */}
             <ImageSection control={control} errors={errors} setValue={setValue} getValues={getValues} />
 
             {/* Quick Information Section */}
@@ -368,71 +335,53 @@ export const PlaceForm: React.FC<PlaceFormProps> = ({
             />
           </div>
 
-          {/* Right Column - Geolocation */}
+          {/* Right Column */}
           <div className="flex flex-col gap-6">
-            <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-5 md:p-6 backdrop-blur-md flex flex-col gap-5">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-350 border-b border-slate-850 pb-2">
+            <div className="bg-[#121212]/60 border border-white/10 rounded-xl p-5 flex flex-col gap-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 border-b border-white/10 pb-2">
                 Coordinates
               </h3>
 
-              {/* Coordinates Grid */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <Input
                   label="Latitude"
-                  placeholder="e.g. 36.2704"
+                  placeholder="36.2704"
                   error={errors.latitude?.message}
                   {...register("latitude")}
                 />
                 <Input
                   label="Longitude"
-                  placeholder="e.g. -121.8081"
+                  placeholder="-121.8081"
                   error={errors.longitude?.message}
                   {...register("longitude")}
                 />
               </div>
-
-              <div className="bg-slate-950/50 rounded-lg p-3.5 border border-slate-850">
-                <p className="text-[10px] text-slate-500 leading-relaxed">
-                  Coordinates must be decimal format (Latitude: -90 to 90, Longitude: -180 to 180). Check GPS or maps to acquire precise values.
-                </p>
-              </div>
             </div>
 
             {/* Live Attributes Payload JSON Card */}
-            <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-5 md:p-6 backdrop-blur-md flex flex-col gap-4 sticky top-20">
-              <div className="flex items-center justify-between border-b border-slate-850 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-                    Live Payload JSON
-                  </h3>
-                </div>
+            <div className="bg-[#121212]/60 border border-white/10 rounded-xl p-5 flex flex-col gap-3 sticky top-20">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                  Live JSON
+                </h3>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(JSON.stringify(livePayload, null, 2));
-                      setCopiedLive(true);
-                      setTimeout(() => setCopiedLive(false), 2000);
-                    }}
-                    className="text-[10px] py-1 px-2.5 flex items-center gap-1 bg-slate-950 border-slate-800 hover:bg-slate-900"
-                  >
-                    {copiedLive ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
-                    {copiedLive ? "Copied!" : "Copy JSON"}
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(JSON.stringify(livePayload, null, 2));
+                    setCopiedLive(true);
+                    setTimeout(() => setCopiedLive(false), 2000);
+                  }}
+                  className="text-[10px] py-1 px-2.5"
+                >
+                  {copiedLive ? "Copied" : "Copy"}
+                </Button>
               </div>
 
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Real-time normalized attributes payload schema updating live as you edit form fields or attach image links.
-              </p>
-
-              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-850 max-h-[420px] overflow-y-auto font-mono text-[11px] leading-relaxed scrollbar-thin select-text">
-                <pre className="text-emerald-400/90 whitespace-pre-wrap font-mono">
+              <div className="bg-[#0e0e0e] p-3 rounded-lg border border-white/10 max-h-[420px] overflow-y-auto font-mono text-[11px] leading-relaxed text-neutral-300 scrollbar-thin select-text">
+                <pre className="whitespace-pre-wrap font-mono">
                   {JSON.stringify(livePayload, null, 2)}
                 </pre>
               </div>
@@ -442,55 +391,32 @@ export const PlaceForm: React.FC<PlaceFormProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/40 border border-slate-800 rounded-xl p-5 backdrop-blur-md">
-          <div className="flex items-center gap-2 text-slate-400 select-none">
-            {!isValid && (
-              <div className="flex items-center gap-1.5 text-amber-500/80">
-                <AlertTriangle className="w-4 h-4" />
-                <span className="text-xs">Form has unresolved validation errors</span>
-              </div>
-            )}
-            {isValid && (
-              <div className="flex items-center gap-1.5 text-emerald-500/80">
-                <CheckCircle2 className="w-4 h-4" />
-                <span className="text-xs">Form details are valid and ready</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-            {onCancel && (
-              <Button
-                variant="secondary"
-                type="button"
-                onClick={onCancel}
-                className="w-full sm:w-auto border-slate-800 text-slate-400 hover:text-slate-200"
-              >
-                Cancel
-              </Button>
-            )}
-
-            {/* Preview Button */}
+        <div className="flex items-center justify-end gap-3 bg-[#121212]/60 border border-white/10 rounded-xl p-4">
+          {onCancel && (
             <Button
               variant="secondary"
-              onClick={handleOpenPreview}
               type="button"
-              className="w-full sm:w-auto flex items-center justify-center gap-2"
+              onClick={onCancel}
             >
-              <FileCode className="w-4 h-4 text-slate-400" />
-              Preview JSON
+              Cancel
             </Button>
+          )}
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {initialPlace ? "Save Changes" : "Submit Contribution"}
-            </Button>
-          </div>
+          <Button
+            variant="secondary"
+            onClick={handleOpenPreview}
+            type="button"
+          >
+            Preview JSON
+          </Button>
+
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isSubmitting}
+          >
+            {initialPlace ? "Save" : "Submit"}
+          </Button>
         </div>
       </form>
 
@@ -498,7 +424,7 @@ export const PlaceForm: React.FC<PlaceFormProps> = ({
       <Modal
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
-        title="Normalized PlaceDetails Preview (JSON)"
+        title="JSON Preview"
         jsonContent={previewData}
       />
     </div>

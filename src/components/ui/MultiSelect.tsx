@@ -117,7 +117,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   return (
     <div ref={containerRef} className="w-full flex flex-col gap-1.5 relative">
       {label && (
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none">
+        <span className="text-[11px] font-medium tracking-wide text-neutral-400 select-none">
           {label}
         </span>
       )}
@@ -128,22 +128,22 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
           setIsOpen(true);
           inputRef.current?.focus();
         }}
-        className={`w-full bg-slate-900/60 border min-h-[46px] flex flex-wrap gap-2 items-center px-3 py-2 rounded-lg cursor-text transition-all duration-200 ${
+        className={`w-full bg-[#141414] border min-h-[42px] flex flex-wrap gap-1.5 items-center px-3 py-1.5 rounded-lg cursor-text transition-colors ${
           error
-            ? "border-red-500/80 focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-500/20"
-            : "border-slate-800 focus-within:border-violet-500 focus-within:ring-4 focus-within:ring-violet-500/20"
+            ? "border-red-500/60 focus-within:border-red-400"
+            : "border-white/10 focus-within:border-white/60 focus-within:ring-1 focus-within:ring-white/20"
         }`}
       >
         {selected.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 bg-violet-950/60 text-violet-300 border border-violet-800/60 pl-2.5 pr-1.5 py-0.5 rounded-full text-xs font-medium animate-fadeIn select-none"
+            className="inline-flex items-center gap-1 bg-white/10 text-white border border-white/15 pl-2 pr-1 py-0.5 rounded text-xs select-none"
           >
             {tag}
             <button
               type="button"
               onClick={(e) => handleRemoveOption(tag, e)}
-              className="text-violet-400 hover:text-violet-200 p-0.5 rounded-full hover:bg-violet-900/60 transition-colors"
+              className="text-neutral-400 hover:text-white p-0.5 rounded transition-colors"
             >
               <X className="w-3 h-3" />
             </button>
@@ -151,7 +151,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
         ))}
 
         <div className="flex-1 min-w-[120px] flex items-center gap-1.5">
-          <Search className="w-4 h-4 text-slate-500 flex-shrink-0" />
+          <Search className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -162,30 +162,30 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
             }}
             onKeyDown={handleKeyDown}
             placeholder={selected.length === 0 ? placeholder : ""}
-            className="w-full bg-transparent border-none outline-none text-sm text-slate-100 placeholder-slate-500 p-0 focus:ring-0 focus:outline-none"
+            className="w-full bg-transparent border-none outline-none text-xs text-white placeholder:text-neutral-600 p-0 focus:ring-0 focus:outline-none"
           />
         </div>
       </div>
 
       {error && (
-        <span className="text-xs font-medium text-red-400 select-none animate-fadeIn">
+        <span className="text-[11px] font-medium text-red-400 select-none animate-fadeIn">
           {error}
         </span>
       )}
 
       {/* Dropdown Options */}
       {isOpen && (
-        <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-lg shadow-2xl z-50 max-h-60 overflow-y-auto overflow-x-hidden p-1 animate-slideDown scrollbar-thin">
+        <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-[#141414] border border-white/15 rounded-lg shadow-2xl z-50 max-h-60 overflow-y-auto overflow-x-hidden p-1 animate-slideDown scrollbar-thin">
           {/* Custom Tag Option */}
           {showAddCustom && (
             <button
               type="button"
               onClick={() => handleSelectOption(query.trim())}
-              className="w-full flex items-center justify-between text-left px-3 py-2.5 text-xs text-emerald-400 hover:bg-slate-800/80 rounded-md font-semibold transition-colors group"
+              className="w-full flex items-center justify-between text-left px-3 py-2 text-xs text-white hover:bg-white/10 rounded font-medium transition-colors group"
             >
               <span className="flex items-center gap-2">
-                <Plus className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                Add custom category: &quot;{query.trim()}&quot;
+                <Plus className="w-3.5 h-3.5" />
+                Add &quot;{query.trim()}&quot;
               </span>
             </button>
           )}
@@ -197,15 +197,15 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                 key={option}
                 type="button"
                 onClick={() => handleSelectOption(option)}
-                className="w-full flex items-center justify-between text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-md transition-all group"
+                className="w-full flex items-center justify-between text-left px-3 py-1.5 text-xs text-neutral-300 hover:text-white hover:bg-white/10 rounded transition-colors group"
               >
                 <span>{option}</span>
-                <Check className="w-4 h-4 text-violet-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Check className="w-3.5 h-3.5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             ))
           ) : !showAddCustom ? (
-            <div className="px-3 py-4 text-center text-xs text-slate-500 select-none">
-              No categories found. Type to add a custom one.
+            <div className="px-3 py-3 text-center text-xs text-neutral-500 select-none">
+              No categories found.
             </div>
           ) : null}
         </div>

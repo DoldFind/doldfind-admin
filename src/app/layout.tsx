@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DoldFind - Contributor Dashboard",
-  description: "Contribute and manage spots for DoldFind application.",
+  title: "DoldFind",
+  description: "DoldFind Admin",
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100 selection:bg-violet-500/30 selection:text-violet-200">
+      <body className="min-h-full flex flex-col bg-[#0e0e0e] text-white selection:bg-white/20 selection:text-white">
         {children}
       </body>
     </html>
