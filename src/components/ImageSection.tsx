@@ -28,7 +28,9 @@ interface ImageSectionProps {
 
 const CC_LICENSE_PRESETS: { label: string; value: string; url: string }[] = [
   { label: "CC BY-SA 4.0 (Attribution-ShareAlike)", value: "CC BY-SA 4.0", url: "https://creativecommons.org/licenses/by-sa/4.0/" },
+  { label: "CC BY-SA 3.0 (Attribution-ShareAlike)", value: "CC BY-SA 3.0", url: "https://creativecommons.org/licenses/by-sa/3.0/" },
   { label: "CC BY 4.0 (Attribution)", value: "CC BY 4.0", url: "https://creativecommons.org/licenses/by/4.0/" },
+  { label: "CC BY 3.0 (Attribution)", value: "CC BY 3.0", url: "https://creativecommons.org/licenses/by/3.0/" },
   { label: "CC BY-NC 4.0 (NonCommercial)", value: "CC BY-NC 4.0", url: "https://creativecommons.org/licenses/by-nc/4.0/" },
   { label: "CC BY-NC-SA 4.0 (NonCommercial-ShareAlike)", value: "CC BY-NC-SA 4.0", url: "https://creativecommons.org/licenses/by-nc-sa/4.0/" },
   { label: "CC BY-ND 4.0 (NoDerivatives)", value: "CC BY-ND 4.0", url: "https://creativecommons.org/licenses/by-nd/4.0/" },
@@ -210,12 +212,12 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ control, errors }) =
                   let creditItem: ImageCredit = {
                     imageIndex: currentImages.length,
                     imageUrl: trimmed,
-                    author: "Unknown Contributor",
+                    author: "Unknown Author",
                     authorUrl: "",
                     source: "Direct Web URL",
                     sourceUrl: trimmed,
-                    license: "CC BY-SA 4.0",
-                    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0/",
+                    license: "Unknown",
+                    licenseUrl: "",
                     title: "",
                   };
 
@@ -236,12 +238,12 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ control, errors }) =
                         creditItem = {
                           imageIndex: currentImages.length,
                           imageUrl: finalUrl,
-                          author: result.data.author || "Wikimedia Commons Contributor",
+                          author: result.data.author || "Unknown Author",
                           authorUrl: result.data.authorUrl || "",
                           source: result.data.source || (isWikimedia ? "Wikimedia Commons" : "Flickr"),
                           sourceUrl: result.data.sourceUrl || trimmed,
-                          license: result.data.license || "CC BY-SA 4.0",
-                          licenseUrl: result.data.licenseUrl || "https://creativecommons.org/licenses/by-sa/4.0/",
+                          license: result.data.license || "Unknown",
+                          licenseUrl: result.data.licenseUrl || "",
                           title: result.data.title || "",
                         };
 
