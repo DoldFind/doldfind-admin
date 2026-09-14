@@ -10,6 +10,7 @@ export interface PlaceDetails {
   mainCategory: string;
   categories: string[];
   images: string[];
+  cardCover?: string | null;
 
   city: string;
   area: string;
@@ -59,6 +60,7 @@ export interface PlaceFormValues {
   mainCategory: string;
   categories: string[];
   images: string[];
+  cardCover?: string | null;
 
   city: string;
   area: string;

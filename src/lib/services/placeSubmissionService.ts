@@ -37,6 +37,7 @@ export class PlaceSubmissionService {
       mainCategory: parsed.mainCategory,
       categories: parsed.categories,
       images: parsed.images,
+      cardCover: parsed.cardCover,
       city: parsed.city,
       area: parsed.area,
       state: parsed.state,
