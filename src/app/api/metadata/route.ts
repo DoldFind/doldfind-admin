@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
             const page = pages[pageId];
             if (page && pageId !== "-1" && page.imageinfo && page.imageinfo.length > 0) {
               const info = page.imageinfo[0];
-              if (info.url) imageUrl = info.url;
+              if (info.url) imageUrl = info.url.split("?")[0];
               if (info.descriptionurl) sourceUrl = info.descriptionurl;
 
               if (info.extmetadata) {
@@ -116,7 +116,9 @@ export async function GET(request: NextRequest) {
                       authorUrl = `https://commons.wikimedia.org${link}`;
                     }
                   }
-                  const parsedAuthor = $.text().trim() || rawArtist.replace(/<[^>]*>?/gm, "").trim();
+                  const parsedAuthor = ($.text() || rawArtist.replace(/<[^>]*>?/gm, ""))
+                    .replace(/\s+/g, " ")
+                    .trim();
                   if (parsedAuthor) {
                     author = parsedAuthor;
                   }
@@ -128,15 +130,43 @@ export async function GET(request: NextRequest) {
                   license = meta.License.value.toUpperCase().trim();
                 }
 
+                // Check categories for specific CC license tags (e.g., CC-BY-2.0)
+                if (meta.Categories?.value) {
+                  const ccCatMatch = meta.Categories.value.match(/\b(CC-BY(?:-SA|-NC|-ND)?-[0-9.]+)\b/i);
+                  if (ccCatMatch) {
+                    license = ccCatMatch[1].replace(/CC-BY/i, "CC BY").replace(/-/g, " ").trim();
+                  }
+                }
+
                 if (meta.LicenseUrl?.value) {
                   const rawLicUrl = meta.LicenseUrl.value.trim();
                   licenseUrl = rawLicUrl.startsWith("//") ? `https:${rawLicUrl}` : rawLicUrl;
                 }
 
+                // Check if Credit contains a Flickr photo URL to retrieve original Flickr license
+                const creditHtml = meta.Credit?.value || "";
+                const flickrMatch = creditHtml.match(/https?:\/\/[^"'\s<>]*flickr\.com\/photos\/[^"'\s<]+/i);
+                if (flickrMatch) {
+                  const flickrPhotoUrl = flickrMatch[0];
+                  try {
+                    const oembedUrl = `https://www.flickr.com/services/oembed/?format=json&url=${encodeURIComponent(
+                      flickrPhotoUrl
+                    )}`;
+                    const oembedRes = await fetch(oembedUrl);
+                    if (oembedRes.ok) {
+                      const oembedData = await oembedRes.json();
+                      if (oembedData.license) license = oembedData.license.trim();
+                      if (oembedData.license_url) licenseUrl = oembedData.license_url.trim();
+                    }
+                  } catch (err) {
+                    Logger.warn(`Flickr oEmbed lookup from Wikimedia Credit failed: ${err}`);
+                  }
+                }
+
                 if (meta.ObjectName?.value) {
-                  title = meta.ObjectName.value.trim();
+                  title = meta.ObjectName.value.replace(/\s+/g, " ").trim();
                 } else {
-                  title = rawFilename.replace(/\.[^/.]+$/, "").replace(/_/g, " ").trim();
+                  title = rawFilename.replace(/\.[^/.]+$/, "").replace(/_/g, " ").replace(/\s+/g, " ").trim();
                 }
               }
             }
@@ -152,12 +182,12 @@ export async function GET(request: NextRequest) {
         const oembedRes = await fetch(oembedUrl);
         if (oembedRes.ok) {
           const oembedData = await oembedRes.json();
-          if (oembedData.author_name) author = oembedData.author_name.trim();
+          if (oembedData.author_name) author = oembedData.author_name.replace(/\s+/g, " ").trim();
           if (oembedData.author_url) authorUrl = oembedData.author_url.trim();
-          if (oembedData.title) title = oembedData.title.trim();
-          if (oembedData.url) imageUrl = oembedData.url;
+          if (oembedData.title) title = oembedData.title.replace(/\s+/g, " ").trim();
+          if (oembedData.url) imageUrl = oembedData.url.split("?")[0];
           else if (oembedData.thumbnail_url) {
-            imageUrl = oembedData.thumbnail_url.replace("_q.jpg", "_b.jpg");
+            imageUrl = oembedData.thumbnail_url.replace("_q.jpg", "_b.jpg").split("?")[0];
           }
         }
       } catch (err) {
@@ -173,7 +203,7 @@ export async function GET(request: NextRequest) {
           const $ = cheerio.load(html);
 
           const ogImage = $('meta[property="og:image"]').attr("content");
-          if (ogImage) imageUrl = ogImage;
+          if (ogImage) imageUrl = ogImage.split("?")[0];
 
           const ccLink = $('a[rel="license"]').attr("href");
           if (ccLink) {
@@ -194,14 +224,25 @@ export async function GET(request: NextRequest) {
     }
 
     if (!licenseUrl && license !== "Unknown") {
-      if (license.includes("CC BY-SA 3.0")) {
-        licenseUrl = "https://creativecommons.org/licenses/by-sa/3.0/";
-      } else if (license.includes("CC BY-SA")) {
+      const licUpper = license.toUpperCase();
+      if (licUpper.includes("CC BY-SA 4.0")) {
         licenseUrl = "https://creativecommons.org/licenses/by-sa/4.0/";
-      } else if (license.includes("CC BY 3.0")) {
-        licenseUrl = "https://creativecommons.org/licenses/by/3.0/";
-      } else if (license.includes("CC BY")) {
+      } else if (licUpper.includes("CC BY-SA 3.0")) {
+        licenseUrl = "https://creativecommons.org/licenses/by-sa/3.0/";
+      } else if (licUpper.includes("CC BY-SA 2.0")) {
+        licenseUrl = "https://creativecommons.org/licenses/by-sa/2.0/";
+      } else if (licUpper.includes("CC BY-SA")) {
+        licenseUrl = "https://creativecommons.org/licenses/by-sa/4.0/";
+      } else if (licUpper.includes("CC BY 4.0")) {
         licenseUrl = "https://creativecommons.org/licenses/by/4.0/";
+      } else if (licUpper.includes("CC BY 3.0")) {
+        licenseUrl = "https://creativecommons.org/licenses/by/3.0/";
+      } else if (licUpper.includes("CC BY 2.0")) {
+        licenseUrl = "https://creativecommons.org/licenses/by/2.0/";
+      } else if (licUpper.includes("CC BY")) {
+        licenseUrl = "https://creativecommons.org/licenses/by/4.0/";
+      } else if (licUpper.includes("PUBLIC DOMAIN") || licUpper.includes("PD")) {
+        licenseUrl = "https://creativecommons.org/publicdomain/mark/1.0/";
       }
     }
 
