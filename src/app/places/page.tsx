@@ -533,11 +533,11 @@ export default function PlacesManagement() {
                   key={place.id}
                   className="bg-[#141414] border border-white/10 rounded-xl p-4 flex flex-col gap-3 hover:border-white/20 transition group overflow-hidden"
                 >
-                  {place.images && place.images.length > 0 && (
+                  {(place.cardCover || (place.images && place.images.length > 0)) && (
                     <div className="relative -mx-4 -mt-4 h-36 bg-black overflow-hidden border-b border-white/10">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={place.images[0]}
+                        src={place.cardCover || place.images[0]}
                         alt={place.placeName}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                       />
