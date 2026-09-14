@@ -3,7 +3,7 @@ import { z } from "zod";
 const coordinateRegex = /^-?\d+(\.\d+)?$/;
 
 export const imageCreditSchema = z.object({
-  imageIndex: z.number().int().min(0),
+  imageIndex: z.number().int().min(-1),
   imageUrl: z.string().min(1, { message: "Image URL is required" }),
   author: z
     .string()
@@ -60,6 +60,7 @@ export const placeSchema = z
           .min(1, { message: "Image path or URL cannot be empty" })
       )
       .max(10, { message: "Cannot attach more than 10 images" }),
+    cardCover: z.string().nullable().optional(),
     city: z
       .string()
       .min(1, { message: "City is required" })
