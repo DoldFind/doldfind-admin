@@ -83,6 +83,8 @@ export function normalizePlaceDetails(formValues: PlaceFormValues): PlaceDetails
     )
   );
 
+  const cardCover = formValues?.cardCover?.trim() || null;
+
   const trimmedFee = (formValues?.entryFee || "").trim();
   let feeValue = "";
   if (!trimmedFee) {
@@ -155,6 +157,7 @@ export function normalizePlaceDetails(formValues: PlaceFormValues): PlaceDetails
     mainCategory: (formValues?.mainCategory || "").trim(),
     categories: normalizedCategories,
     images: normalizedImages,
+    cardCover,
 
     city: (formValues?.city || "").trim(),
     area: (formValues?.area || "").trim(),
@@ -322,10 +325,11 @@ export function mapPlaceDetailsToFormValues(place: PlaceDetails): PlaceFormValue
   }
 
   // Ensure every image in images has a corresponding credit entry
+  const cardCoverCredit = credits.find((c) => c.imageIndex === -1 || (place.cardCover && c.imageUrl === place.cardCover));
   if (place.images && place.images.length > 0) {
     const populatedCredits: ImageCredit[] = [];
     for (let i = 0; i < place.images.length; i++) {
-      const existing = credits.find((c) => c.imageIndex === i) || credits[i];
+      const existing = credits.find((c) => c.imageIndex === i) || (credits[i] && credits[i].imageIndex !== -1 ? credits[i] : undefined);
       if (existing) {
         populatedCredits.push({
           ...existing,
@@ -346,7 +350,42 @@ export function mapPlaceDetailsToFormValues(place: PlaceDetails): PlaceFormValue
         });
       }
     }
+    if (cardCoverCredit) {
+      populatedCredits.push({
+        ...cardCoverCredit,
+        imageIndex: -1,
+        imageUrl: place.cardCover || cardCoverCredit.imageUrl,
+      });
+    } else if (place.cardCover) {
+      populatedCredits.push({
+        imageIndex: -1,
+        imageUrl: place.cardCover,
+        author: place.uploaderId || "Contributor",
+        authorUrl: "",
+        source: "Direct Upload / Original Work",
+        sourceUrl: "",
+        license: "CC BY-SA 4.0",
+        licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0/",
+        title: "",
+      });
+    }
     credits = populatedCredits;
+  } else if (place.cardCover) {
+    if (cardCoverCredit) {
+      credits = [{ ...cardCoverCredit, imageIndex: -1, imageUrl: place.cardCover }];
+    } else {
+      credits = [{
+        imageIndex: -1,
+        imageUrl: place.cardCover,
+        author: place.uploaderId || "Contributor",
+        authorUrl: "",
+        source: "Direct Upload / Original Work",
+        sourceUrl: "",
+        license: "CC BY-SA 4.0",
+        licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0/",
+        title: "",
+      }];
+    }
   }
 
   const transportType = place.transportType || "";
@@ -361,6 +400,7 @@ export function mapPlaceDetailsToFormValues(place: PlaceDetails): PlaceFormValue
     mainCategory: place.mainCategory || "",
     categories: place.categories || [],
     images: place.images || [],
+    cardCover: place.cardCover || null,
     city: place.city || "",
     area: place.area || "",
     state: place.state || "",

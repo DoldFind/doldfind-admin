@@ -44,6 +44,8 @@ export function parseIncomingPayload(data: PlaceFormValues) {
     )
   );
 
+  const cardCover = data.cardCover ? cleanString(data.cardCover) || null : null;
+
   const city = cleanString(data.city);
   const area = cleanString(data.area);
   const state = cleanString(data.state);
@@ -117,6 +119,7 @@ export function parseIncomingPayload(data: PlaceFormValues) {
     mainCategory,
     categories,
     images,
+    cardCover,
     city,
     area,
     state,
